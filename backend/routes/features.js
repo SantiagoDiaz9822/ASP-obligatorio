@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db"); // Conexión a la base de datos
+const auth = require("../middleware/auth"); // Importa el middleware
+
+// Rutas protegidas (usa el middleware)
+router.use(auth);
 
 // Crear una nueva feature
 router.post("/new", (req, res) => {
