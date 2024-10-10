@@ -1,14 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db"); // Asegúrate de tener la conexión configurada en db.js
+const auth = require("../middleware/auth"); // Importa el middleware
 
-// Crear una nueva empresa
-router.post("/new", (req, res) => {
-  const { name, address, logo_url } = req.body;
+// Rutas protegidas (usa el middleware)
+router.use(auth);
 
-  if (!name || !address) {
-    return res.status(400).json({ message: "Faltan campos requeridos." });
-  }
+router.post("/new", auth, authorize("admin"), (req, res) => {
+  const { name, address, logo_url, users } = req.body; // Asumiendo que también se reciben usuarios
 
   const query =
     "INSERT INTO companies (name, address, logo_url) VALUES (?, ?, ?)";
@@ -17,12 +16,31 @@ router.post("/new", (req, res) => {
       console.error("Error al crear la empresa:", err);
       return res.status(500).json({ message: "Error al crear la empresa." });
     }
-    res
-      .status(201)
-      .json({
-        message: "Empresa creada exitosamente",
-        companyId: results.insertId,
+
+    const companyId = results.insertId;
+
+    // Crear usuarios asociados
+    if (users && users.length > 0) {
+      users.forEach((user) => {
+        const { email, password, role } = user;
+        // Hashear la contraseña
+        const hashedPassword = bcrypt.hashSync(password, 10);
+        const userQuery =
+          "INSERT INTO users (company_id, email, password_hash, role) VALUES (?, ?, ?, ?)";
+
+        connection.query(
+          userQuery,
+          [companyId, email, hashedPassword, role],
+          (err) => {
+            if (err) {
+              console.error("Error al crear el usuario:", err);
+            }
+          }
+        );
       });
+    }
+
+    res.status(201).json({ message: "Empresa creada exitosamente", companyId });
   });
 });
 
