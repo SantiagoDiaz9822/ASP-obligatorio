@@ -50,12 +50,26 @@ router.post(
               .status(500)
               .json({ message: "Error al crear el usuario." });
           }
-          res
-            .status(201)
-            .json({
-              message: "Usuario creado exitosamente",
-              userId: results.insertId,
-            });
+
+          // Registrar el cambio
+          const action = "register"; // Acción realizada
+          const changed_fields = { company_id, email, role };
+          const changeQuery =
+            "INSERT INTO change_history (user_id, action, changed_fields) VALUES (?, ?, ?)";
+          connection.query(
+            changeQuery,
+            [results.insertId, action, JSON.stringify(changed_fields)],
+            (err) => {
+              if (err) {
+                console.error("Error al registrar el cambio:", err);
+              }
+            }
+          );
+
+          res.status(201).json({
+            message: "Usuario creado exitosamente",
+            userId: results.insertId,
+          });
         }
       );
     } catch (error) {
@@ -100,9 +114,13 @@ router.post(
       }
 
       // Generar un token JWT
-      const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
-        expiresIn: "1h",
-      });
+      const token = jwt.sign(
+        { id: user.id, role: user.role, company_id: user.company_id },
+        JWT_SECRET,
+        {
+          expiresIn: "1h",
+        }
+      );
 
       res.json({ message: "Inicio de sesión exitoso", token });
     });
@@ -141,24 +159,55 @@ router.get("/:id", auth, authorize("admin"), (req, res) => {
 });
 
 // Ruta para actualizar un usuario (protegida, solo administradores)
-router.put("/:id", auth, authorize("admin"), (req, res) => {
-  const userId = req.params.id;
-  const { email, role } = req.body;
+router.put(
+  "/:id",
+  auth,
+  authorize("admin"),
+  [
+    body("email")
+      .optional()
+      .isEmail()
+      .withMessage("El correo debe ser un email válido"),
+    body("role")
+      .optional()
+      .isIn(["admin", "user"])
+      .withMessage('El rol debe ser "admin" o "user".'),
+  ],
+  (req, res) => {
+    const userId = req.params.id;
+    const { email, role } = req.body;
 
-  const query = "UPDATE users SET email = ?, role = ? WHERE id = ?";
-  connection.query(query, [email, role, userId], (err, results) => {
-    if (err) {
-      console.error("Error al actualizar el usuario:", err);
-      return res
-        .status(500)
-        .json({ message: "Error al actualizar el usuario." });
-    }
-    if (results.affectedRows === 0) {
-      return res.status(404).json({ message: "Usuario no encontrado." });
-    }
-    res.json({ message: "Usuario actualizado exitosamente" });
-  });
-});
+    const query = "UPDATE users SET email = ?, role = ? WHERE id = ?";
+    connection.query(query, [email, role, userId], (err, results) => {
+      if (err) {
+        console.error("Error al actualizar el usuario:", err);
+        return res
+          .status(500)
+          .json({ message: "Error al actualizar el usuario." });
+      }
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: "Usuario no encontrado." });
+      }
+
+      // Registrar el cambio
+      const action = "update"; // Acción realizada
+      const changed_fields = { email, role };
+      const changeQuery =
+        "INSERT INTO change_history (user_id, action, changed_fields) VALUES (?, ?, ?)";
+      connection.query(
+        changeQuery,
+        [userId, action, JSON.stringify(changed_fields)],
+        (err) => {
+          if (err) {
+            console.error("Error al registrar el cambio:", err);
+          }
+        }
+      );
+
+      res.json({ message: "Usuario actualizado exitosamente" });
+    });
+  }
+);
 
 // Ruta para eliminar un usuario (protegida, solo administradores)
 router.delete("/:id", auth, authorize("admin"), (req, res) => {
@@ -173,6 +222,22 @@ router.delete("/:id", auth, authorize("admin"), (req, res) => {
     if (results.affectedRows === 0) {
       return res.status(404).json({ message: "Usuario no encontrado." });
     }
+
+    // Registrar el cambio
+    const action = "delete"; // Acción realizada
+    const changed_fields = { userId };
+    const changeQuery =
+      "INSERT INTO change_history (user_id, action, changed_fields) VALUES (?, ?, ?)";
+    connection.query(
+      changeQuery,
+      [userId, action, JSON.stringify(changed_fields)],
+      (err) => {
+        if (err) {
+          console.error("Error al registrar el cambio:", err);
+        }
+      }
+    );
+
     res.json({ message: "Usuario eliminado exitosamente" });
   });
 });

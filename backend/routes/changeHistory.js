@@ -1,15 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db"); // Conexión a la base de datos
-const auth = require("../middleware/auth"); // Importa el middleware
+const auth = require("../middleware/auth"); // Importa el middleware de autenticación
 
 // Rutas protegidas (usa el middleware)
 router.use(auth);
 
-// Crear un nuevo registro de cambio
+// Ruta para registrar un nuevo cambio
 router.post("/new", (req, res) => {
-  const { feature_id, user_id, action, changed_fields } = req.body;
+  const { feature_id, action, changed_fields } = req.body;
+  const user_id = req.userId; // Obtiene el ID del usuario de la solicitud
 
+  // Validar los campos requeridos
   if (!feature_id || !action) {
     return res.status(400).json({ message: "Faltan campos requeridos." });
   }
@@ -21,10 +23,10 @@ router.post("/new", (req, res) => {
     [feature_id, user_id, action, JSON.stringify(changed_fields)],
     (err, results) => {
       if (err) {
-        console.error("Error al crear el registro de cambio:", err);
+        console.error("Error al registrar el cambio:", err);
         return res
           .status(500)
-          .json({ message: "Error al crear el registro de cambio." });
+          .json({ message: "Error al registrar el cambio." });
       }
       res.status(201).json({
         message: "Registro de cambio creado exitosamente",
