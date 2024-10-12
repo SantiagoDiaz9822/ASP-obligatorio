@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt"); // Para hashear las contraseñas
 const jwt = require("jsonwebtoken"); // Para manejar JWT
 const { body, validationResult } = require("express-validator"); // Para validación
 const connection = require("../db"); // Conexión a la base de datos
+const transporter = require("../mailer"); // Importa el transportador
 require("dotenv").config(); // Cargar variables de entorno
 
 const JWT_SECRET = process.env.JWT_SECRET; // Cargar el secreto desde .env
@@ -51,20 +52,32 @@ router.post(
               .json({ message: "Error al crear el usuario." });
           }
 
-          // Registrar el cambio
-          const action = "register"; // Acción realizada
-          const changed_fields = { company_id, email, role };
-          const changeQuery =
-            "INSERT INTO change_history (user_id, action, changed_fields) VALUES (?, ?, ?)";
-          connection.query(
-            changeQuery,
-            [results.insertId, action, JSON.stringify(changed_fields)],
-            (err) => {
-              if (err) {
-                console.error("Error al registrar el cambio:", err);
-              }
+          // Generar un token para el primer inicio de sesión
+          const token = jwt.sign(
+            { email, company_id },
+            process.env.JWT_SECRET,
+            {
+              expiresIn: "1h", // El token expirará en 1 hora
             }
           );
+
+          // Enviar correo electrónico de bienvenida
+          const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Bienvenido a Nuestra Aplicación",
+            text: `Hola,\n\nGracias por registrarte en nuestra aplicación. 
+            Puedes realizar tu primer inicio de sesión usando el siguiente enlace:\n
+            http://tu_dominio.com/reset-password?token=${token}\n\n¡Bienvenido a bordo!`,
+          };
+
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              console.error("Error al enviar el correo:", error);
+            } else {
+              console.log("Correo enviado:", info.response);
+            }
+          });
 
           res.status(201).json({
             message: "Usuario creado exitosamente",
@@ -123,6 +136,62 @@ router.post(
       );
 
       res.json({ message: "Inicio de sesión exitoso", token });
+    });
+  }
+);
+
+// Ruta para restablecer la contraseña usando el token
+router.post(
+  "/reset-password",
+  [
+    body("token").notEmpty().withMessage("El token es requerido."),
+    body("new_password")
+      .isLength({ min: 6 })
+      .withMessage("La nueva contraseña debe tener al menos 6 caracteres"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { token, new_password } = req.body;
+
+    // Verificar el token
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ message: "Token inválido o expirado." });
+      }
+
+      // Extraer información del token
+      const { email, company_id } = decoded;
+
+      // Actualizar la contraseña
+      const hashedPassword = await bcrypt.hash(new_password, 10);
+      const updateQuery =
+        "UPDATE users SET password_hash = ?, first_login = false WHERE email = ? AND company_id = ?";
+
+      connection.query(
+        updateQuery,
+        [hashedPassword, email, company_id],
+        (err, results) => {
+          if (err) {
+            console.error("Error al actualizar la contraseña:", err);
+            return res
+              .status(500)
+              .json({ message: "Error al actualizar la contraseña." });
+          }
+
+          if (results.affectedRows === 0) {
+            return res.status(404).json({ message: "Usuario no encontrado." });
+          }
+
+          res.json({
+            message:
+              "Contraseña restablecida exitosamente. Ahora puedes iniciar sesión.",
+          });
+        }
+      );
     });
   }
 );
