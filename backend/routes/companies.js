@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const connection = require("../db"); // Conexión a la base de datos
-const auth = require("../middleware/auth"); // Middleware de autenticación
-const authorize = require("../middleware/authorize"); // Middleware de autorización
-const { body, validationResult } = require("express-validator"); // Para validaciones
-const bcrypt = require("bcrypt"); // Para hashear contraseñas
+const connection = require("../db");
+const auth = require("../middleware/auth");
+const authorize = require("../middleware/authorize");
+const { body, validationResult } = require("express-validator");
+const bcrypt = require("bcrypt");
+const transporter = require("../mailer"); // Asegúrate de que tu transportador esté configurado
 
 // Ruta para registrar una nueva empresa (solo administradores)
 router.post(
@@ -17,10 +18,6 @@ router.post(
       .withMessage("El nombre de la empresa es requerido."),
     body("address").notEmpty().withMessage("La dirección es requerida."),
     body("logo_url").notEmpty().withMessage("La URL del logo es requerida."),
-    body("users")
-      .optional()
-      .isArray()
-      .withMessage("Los usuarios deben ser un array."),
   ],
   (req, res) => {
     const errors = validationResult(req);
@@ -42,10 +39,11 @@ router.post(
 
       // Crear usuarios asociados si se proporcionan
       if (users && users.length > 0) {
-        users.forEach((user) => {
+        users.forEach(async (user) => {
           const { email, password, role } = user;
+
           // Hashear la contraseña
-          const hashedPassword = bcrypt.hashSync(password, 10);
+          const hashedPassword = await bcrypt.hash(password, 10);
           const userQuery =
             "INSERT INTO users (company_id, email, password_hash, role) VALUES (?, ?, ?, ?)";
 
@@ -55,6 +53,24 @@ router.post(
             (err) => {
               if (err) {
                 console.error("Error al crear el usuario:", err);
+              } else {
+                // Enviar correo electrónico de bienvenida
+                const mailOptions = {
+                  from: process.env.EMAIL_USER,
+                  to: email,
+                  subject: "Bienvenido a Nuestra Aplicación",
+                  text: `Hola,\n\nGracias por registrarte en nuestra aplicación. 
+                  Puedes realizar tu primer inicio de sesión usando el siguiente enlace:\n
+                  http://tu_dominio.com/reset-password?email=${email}\n\n¡Bienvenido a bordo!`,
+                };
+
+                transporter.sendMail(mailOptions, (error, info) => {
+                  if (error) {
+                    console.error("Error al enviar el correo:", error);
+                  } else {
+                    console.log("Correo enviado:", info.response);
+                  }
+                });
               }
             }
           );
@@ -65,6 +81,54 @@ router.post(
         .status(201)
         .json({ message: "Empresa creada exitosamente", companyId });
     });
+  }
+);
+
+// Ruta para crear usuarios asociados a una empresa existente (solo administradores)
+router.post(
+  "/:id/users",
+  auth,
+  authorize("admin"),
+  [
+    body("email").isEmail().withMessage("El correo debe ser un email válido"),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("La contraseña debe tener al menos 6 caracteres"),
+    body("role")
+      .isIn(["admin", "user"])
+      .withMessage('El rol debe ser "admin" o "user".'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const companyId = req.params.id; // ID de la empresa
+    const { email, password, role } = req.body;
+
+    // Hashear la contraseña
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userQuery =
+      "INSERT INTO users (company_id, email, password_hash, role) VALUES (?, ?, ?, ?)";
+
+    connection.query(
+      userQuery,
+      [companyId, email, hashedPassword, role],
+      (err, results) => {
+        if (err) {
+          console.error("Error al crear el usuario:", err);
+          return res
+            .status(500)
+            .json({ message: "Error al crear el usuario." });
+        }
+
+        res.status(201).json({
+          message: "Usuario creado exitosamente",
+          userId: results.insertId,
+        });
+      }
+    );
   }
 );
 

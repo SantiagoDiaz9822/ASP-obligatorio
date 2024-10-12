@@ -19,20 +19,28 @@ router.get("/report", authorize("admin"), (req, res) => {
       .json({ message: "startDate y endDate son requeridos." });
   }
 
+  // Convertir fechas a formato SQL si es necesario
+  const start = new Date(startDate)
+    .toISOString()
+    .slice(0, 19)
+    .replace("T", " ");
+  const end = new Date(endDate).toISOString().slice(0, 19).replace("T", " ");
+
   // Consultar registros de uso filtrando por fecha y opcionalmente por proyecto
   let query = `
-    SELECT feature_id, COUNT(*) AS usage_count
+    SELECT feature_id, COUNT(*) AS usage_count, HOUR(created_at) AS hour
     FROM usage_logs
     WHERE created_at BETWEEN ? AND ?
   `;
-  const params = [startDate, endDate];
+  const params = [start, end];
 
+  // Filtro opcional por proyecto
   if (project_id) {
     query += " AND project_id = ?";
     params.push(project_id);
   }
 
-  query += " GROUP BY feature_id";
+  query += " GROUP BY feature_id, hour";
 
   connection.query(query, params, (err, results) => {
     if (err) {

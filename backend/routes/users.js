@@ -17,9 +17,6 @@ router.post(
   auth,
   authorize("admin"),
   [
-    body("company_id")
-      .notEmpty()
-      .withMessage("El campo company_id es requerido."),
     body("email").isEmail().withMessage("El correo debe ser un email válido"),
     body("password")
       .isLength({ min: 6 })
@@ -34,61 +31,92 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { company_id, email, password, role } = req.body;
+    const { email, password, role } = req.body;
 
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const query =
-        "INSERT INTO users (company_id, email, password_hash, role, first_login) VALUES (?, ?, ?, ?, true)";
-      connection.query(
-        query,
-        [company_id, email, hashedPassword, role],
-        (err, results) => {
-          if (err) {
-            console.error("Error al crear el usuario:", err);
-            return res
-              .status(500)
-              .json({ message: "Error al crear el usuario." });
+        "INSERT INTO users (email, password_hash, role, first_login) VALUES (?, ?, ?, true)";
+      connection.query(query, [email, hashedPassword, role], (err, results) => {
+        if (err) {
+          console.error("Error al crear el usuario:", err);
+          return res
+            .status(500)
+            .json({ message: "Error al crear el usuario." });
+        }
+
+        // Generar un token para el primer inicio de sesión
+        const token = jwt.sign(
+          { email }, // Solo pasamos el email, ya no tenemos company_id
+          process.env.JWT_SECRET,
+          {
+            expiresIn: "1h", // El token expirará en 1 hora
           }
+        );
 
-          // Generar un token para el primer inicio de sesión
-          const token = jwt.sign(
-            { email, company_id },
-            process.env.JWT_SECRET,
-            {
-              expiresIn: "1h", // El token expirará en 1 hora
-            }
-          );
-
-          // Enviar correo electrónico de bienvenida
-          const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: "Bienvenido a Nuestra Aplicación",
-            text: `Hola,\n\nGracias por registrarte en nuestra aplicación. 
+        // Enviar correo electrónico de bienvenida
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: "Bienvenido a Nuestra Aplicación",
+          text: `Hola,\n\nGracias por registrarte en nuestra aplicación. 
             Puedes realizar tu primer inicio de sesión usando el siguiente enlace:\n
             http://tu_dominio.com/reset-password?token=${token}\n\n¡Bienvenido a bordo!`,
-          };
+        };
 
-          transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-              console.error("Error al enviar el correo:", error);
-            } else {
-              console.log("Correo enviado:", info.response);
-            }
-          });
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error("Error al enviar el correo:", error);
+          } else {
+            console.log("Correo enviado:", info.response);
+          }
+        });
 
-          res.status(201).json({
-            message: "Usuario creado exitosamente",
-            userId: results.insertId,
-          });
-        }
-      );
+        res.status(201).json({
+          message: "Usuario creado exitosamente",
+          userId: results.insertId,
+        });
+      });
     } catch (error) {
       console.error("Error al hashear la contraseña:", error);
       res.status(500).json({ message: "Error interno del servidor." });
     }
+  }
+);
+
+// Nueva ruta para asignar un usuario a una empresa
+router.post(
+  "/assign-to-company",
+  auth,
+  authorize("admin"),
+  [
+    body("user_id").notEmpty().withMessage("El user_id es requerido."),
+    body("company_id").notEmpty().withMessage("El company_id es requerido."),
+  ],
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { user_id, company_id } = req.body;
+
+    const query = "UPDATE users SET company_id = ? WHERE id = ?";
+    connection.query(query, [company_id, user_id], (err, results) => {
+      if (err) {
+        console.error("Error al asignar el usuario:", err);
+        return res
+          .status(500)
+          .json({ message: "Error al asignar el usuario." });
+      }
+
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: "Usuario no encontrado." });
+      }
+
+      res.json({ message: "Usuario asignado a la empresa exitosamente." });
+    });
   }
 );
 
