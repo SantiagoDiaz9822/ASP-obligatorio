@@ -11,6 +11,7 @@ const projectsRoutes = require("./routes/projects");
 const featuresRoutes = require("./routes/features");
 const changeHistoryRoutes = require("./routes/changeHistory");
 const usageLogsRoutes = require("./routes/usageLogs");
+const checkFeatureRouter = require("./routes/checkFeature");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -33,6 +34,7 @@ app.use("/projects", projectsRoutes);
 app.use("/features", featuresRoutes);
 app.use("/change-history", changeHistoryRoutes);
 app.use("/usage-logs", usageLogsRoutes);
+app.use("/v1/features", checkFeatureRouter);
 
 // Iniciar el servidor
 app.listen(port, () => {

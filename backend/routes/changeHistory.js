@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db"); // Conexión a la base de datos
-const auth = require("../middleware/auth"); // Importa el middleware de autenticación
+const auth = require("../middleware/auth"); // Middleware de autenticación
 
 // Rutas protegidas (usa el middleware)
 router.use(auth);
@@ -36,10 +36,32 @@ router.post("/new", (req, res) => {
   );
 });
 
-// Leer todos los registros de cambios
+// Leer todos los registros de cambios con filtros
 router.get("/", (req, res) => {
-  const query = "SELECT * FROM change_history";
-  connection.query(query, (err, results) => {
+  const { startDate, endDate, feature_key, user_id } = req.query;
+
+  let query = "SELECT * FROM change_history WHERE 1=1";
+  const params = [];
+
+  if (startDate) {
+    query += " AND created_at >= ?";
+    params.push(startDate);
+  }
+  if (endDate) {
+    query += " AND created_at <= ?";
+    params.push(endDate);
+  }
+  if (feature_key) {
+    query +=
+      " AND feature_id IN (SELECT id FROM features WHERE feature_key = ?)";
+    params.push(feature_key);
+  }
+  if (user_id) {
+    query += " AND user_id = ?";
+    params.push(user_id);
+  }
+
+  connection.query(query, params, (err, results) => {
     if (err) {
       console.error("Error al obtener los registros de cambios:", err);
       return res

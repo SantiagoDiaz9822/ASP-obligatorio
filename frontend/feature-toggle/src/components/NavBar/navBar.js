@@ -19,9 +19,7 @@ const NavBar = () => {
   const userEmail = localStorage.getItem("userEmail");
   const userRole = localStorage.getItem("userRole");
 
-  useEffect(() => {
-    console.log("userRole", userRole);
-  }, []);
+  useEffect(() => {}, []);
 
   const toggleMenu = () => {
     setIsBurgerOpen(!isBurgerOpen);
@@ -82,18 +80,7 @@ const NavBar = () => {
               />
               Home
             </Button>
-            <Button
-              color="inherit"
-              component={Link}
-              to="/features"
-              style={{ color: "black" }}
-            >
-              <CameraEnhanceOutlinedIcon
-                fontSize="small"
-                style={{ marginRight: "2px" }}
-              />
-              Features
-            </Button>
+
             <Button
               color="inherit"
               component={Link}

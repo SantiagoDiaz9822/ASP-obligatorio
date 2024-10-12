@@ -13,9 +13,8 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Snackbar,
-} from "@mui/material"; // Importa componentes de MUI
-import { toast } from "react-toastify"; // Importa toast
+} from "@mui/material";
+import { toast } from "react-toastify";
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
@@ -25,7 +24,7 @@ const Projects = () => {
     const fetchProjects = async () => {
       const token = localStorage.getItem("token");
       try {
-        const response = await axios.get("http://localhost:3000/projects/", {
+        const response = await axios.get("http://localhost:3000/projects", {
           headers: {
             Authorization: `${token}`,
           },
@@ -33,16 +32,12 @@ const Projects = () => {
         setProjects(response.data);
       } catch (error) {
         console.error("Error fetching projects:", error);
-        setError("Error al cargar los proyectos."); // Guardar mensaje de error
+        toast.error("Error al cargar los proyectos.");
       }
     };
 
     fetchProjects();
   }, []);
-
-  const handleCloseSnackbar = () => {
-    setError("");
-  };
 
   return (
     <Container>
@@ -74,8 +69,19 @@ const Projects = () => {
                 <TableCell>{project.description}</TableCell>
                 <TableCell>{project.api_key}</TableCell>
                 <TableCell>
-                  <Button variant="contained" color="secondary">
-                    Eliminar
+                  <Button
+                    variant="outlined"
+                    component={Link}
+                    to={`/projects/${project.id}/features`}
+                  >
+                    Ver Features
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    style={{ marginLeft: "10px" }}
+                  >
+                    Eliminar Proyecto
                   </Button>
                 </TableCell>
               </TableRow>
@@ -83,16 +89,6 @@ const Projects = () => {
           </TableBody>
         </Table>
       </TableContainer>
-      {error && (
-        <Snackbar
-          open={Boolean(error)}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        >
-          <div>{error}</div>
-        </Snackbar>
-      )}
     </Container>
   );
 };

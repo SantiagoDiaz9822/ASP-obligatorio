@@ -131,6 +131,40 @@ router.get("/:id", (req, res) => {
   });
 });
 
+// Obtener todas las features de un proyecto específico
+router.get("/:id/features", (req, res) => {
+  const projectId = req.params.id;
+
+  // Verificar que el proyecto pertenece a la empresa del usuario
+  const projectQuery = `SELECT company_id FROM projects WHERE id = ?`;
+  connection.query(projectQuery, [projectId], (err, results) => {
+    if (err) {
+      console.error("Error al verificar el proyecto:", err);
+      return res
+        .status(500)
+        .json({ message: "Error al verificar el proyecto." });
+    }
+
+    if (results.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "No tienes acceso a este proyecto." });
+    }
+
+    // Si el proyecto pertenece a la empresa del usuario, obtenemos las features
+    const query = "SELECT * FROM features WHERE project_id = ?";
+    connection.query(query, [projectId], (err, features) => {
+      if (err) {
+        console.error("Error al obtener las features:", err);
+        return res
+          .status(500)
+          .json({ message: "Error al obtener las features." });
+      }
+      res.json(features);
+    });
+  });
+});
+
 // Eliminar un proyecto (solo si no tiene features)
 router.delete("/:id", (req, res) => {
   const projectId = req.params.id;
