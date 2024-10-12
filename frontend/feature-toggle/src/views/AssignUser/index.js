@@ -2,11 +2,23 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import {
+  Container,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+} from "@mui/material"; // Importa componentes de MUI
+import { toast } from "react-toastify"; // Importa toast
+import { useNavigate } from "react-router-dom";
 
 const AssignUser = () => {
   const { companyId } = useParams();
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState("");
+  const navigate = useNavigate(); // Hook para redirigir
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -14,7 +26,7 @@ const AssignUser = () => {
       try {
         const response = await axios.get("http://localhost:3000/users", {
           headers: {
-            Authorization: `${token}`, // Asegúrate de incluir 'Bearer' antes del token
+            Authorization: `${token}`,
           },
         });
         setUsers(response.data);
@@ -32,40 +44,68 @@ const AssignUser = () => {
 
     try {
       await axios.post(
-        "http://localhost:3000/users/assign-to-company", // Endpoint correcto para asignar el usuario
-        { user_id: selectedUser, company_id: companyId }, // Incluye tanto user_id como company_id
+        "http://localhost:3000/users/assign-to-company",
+        { user_id: selectedUser, company_id: companyId },
         {
           headers: {
-            Authorization: `${token}`, // Asegúrate de incluir 'Bearer' antes del token
+            Authorization: `${token}`,
           },
         }
       );
-      // Redirigir o mostrar un mensaje de éxito
-      console.log("Usuario asignado a la empresa exitosamente.");
+      // Mostrar el mensaje de éxito
+      toast.success("Usuario asignado a la empresa exitosamente!", {
+        position: "bottom-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      navigate("/companies");
     } catch (error) {
       console.error("Error assigning user to company:", error);
+      // Mostrar el mensaje de error
+      toast.error("Error al asignar el usuario a la empresa.", {
+        position: "bottom-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>Asignar Usuario a Empresa</h1>
-      <label>
-        Selecciona un Usuario:
-        <select
-          value={selectedUser}
-          onChange={(e) => setSelectedUser(e.target.value)}
-        >
-          <option value="">Seleccionar...</option>
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.email}
-            </option>
-          ))}
-        </select>
-      </label>
-      <button type="submit">Asignar Usuario</button>
-    </form>
+    <Container>
+      <Typography variant="h4" gutterBottom>
+        Asignar Usuario a Empresa
+      </Typography>
+      <form onSubmit={handleSubmit}>
+        <FormControl fullWidth margin="normal">
+          <InputLabel id="user-select-label">Selecciona un Usuario</InputLabel>
+          <Select
+            labelId="user-select-label"
+            value={selectedUser}
+            onChange={(e) => setSelectedUser(e.target.value)}
+            label="Selecciona un Usuario"
+            required
+          >
+            <MenuItem value="">
+              <em>Seleccionar...</em>
+            </MenuItem>
+            {users.map((user) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.email}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Button variant="contained" color="primary" type="submit">
+          Asignar Usuario
+        </Button>
+      </form>
+    </Container>
   );
 };
 

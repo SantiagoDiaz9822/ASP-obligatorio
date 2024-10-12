@@ -15,12 +15,12 @@ import { useNavigate } from "react-router-dom";
 const NavBar = () => {
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const [email, setEmail] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
   let navigate = useNavigate();
+  const userEmail = localStorage.getItem("userEmail");
+  const userRole = localStorage.getItem("userRole");
 
   useEffect(() => {
-    // Aquí puedes agregar la lógica para obtener el email y el rol del usuario.
+    console.log("userRole", userRole);
   }, []);
 
   const toggleMenu = () => {
@@ -36,6 +36,9 @@ const NavBar = () => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userRole");
     navigate("/login");
     setAnchorEl(null);
   };
@@ -94,10 +97,18 @@ const NavBar = () => {
             <Button
               color="inherit"
               component={Link}
-              to="/companies" // Enlace para ver empresas
+              to="/companies"
               style={{ color: "black" }}
             >
               Companies
+            </Button>
+            <Button
+              color="inherit"
+              component={Link}
+              to="/projects"
+              style={{ color: "black" }}
+            >
+              Projects
             </Button>
           </div>
           <Button
@@ -106,7 +117,7 @@ const NavBar = () => {
             style={{ color: "black" }}
           >
             <PersonIcon fontSize="small" style={{ marginRight: "2px" }} />
-            {email}
+            {userEmail}
           </Button>
           <Menu
             anchorEl={anchorEl}
@@ -116,8 +127,8 @@ const NavBar = () => {
             <MenuItem component={Link} to="/login" onClick={handleLogout}>
               Log Out
             </MenuItem>
-            {isAdmin && (
-              <MenuItem component={Link} to="/admin_panel">
+            {userRole === "admin" && (
+              <MenuItem component={Link} to="/admin-panel">
                 Admin Panel
               </MenuItem>
             )}

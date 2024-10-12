@@ -1,10 +1,15 @@
+// src/views/CreateCompany.js
 import React, { useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import axios from "axios"; 
+import { TextField, Button, Typography, Container, Paper } from "@mui/material";
+import { toast } from "react-toastify"; 
 
 const CreateCompany = () => {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const navigate = useNavigate(); 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,41 +25,76 @@ const CreateCompany = () => {
           },
         }
       );
-      // Redirigir a la página de empresas o mostrar un mensaje de éxito
+      // Mostrar el mensaje de éxito
+      toast.success("Empresa creada exitosamente!", {
+        position: "bottom-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      // Redirigir a la página de empresas
+      navigate("/companies");
     } catch (error) {
       console.error("Error creating company:", error);
+      // Mostrar el mensaje de error
+      toast.error("Error al crear la empresa.", {
+        position: "bottom-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>Crear Empresa</h1>
-      <label>
-        Nombre:
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </label>
-      <label>
-        Dirección:
-        <input
-          type="text"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-        />
-      </label>
-      <label>
-        URL del Logo:
-        <input
-          type="text"
-          value={logoUrl}
-          onChange={(e) => setLogoUrl(e.target.value)}
-        />
-      </label>
-      <button type="submit">Crear Empresa</button>
-    </form>
+    <Container maxWidth="sm" style={{ marginTop: "20px" }}>
+      <Paper elevation={3} style={{ padding: "20px" }}>
+        <Typography variant="h4" gutterBottom>
+          Crear Empresa
+        </Typography>
+        <form onSubmit={handleSubmit}>
+          <TextField
+            label="Nombre"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <TextField
+            label="Dirección"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            required
+          />
+          <TextField
+            label="URL del Logo"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={logoUrl}
+            onChange={(e) => setLogoUrl(e.target.value)}
+            required
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            style={{ marginTop: "20px" }}
+          >
+            Crear Empresa
+          </Button>
+        </form>
+      </Paper>
+    </Container>
   );
 };
 

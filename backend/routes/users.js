@@ -162,8 +162,8 @@ router.post(
           expiresIn: "1h",
         }
       );
-
-      res.json({ message: "Inicio de sesión exitoso", token });
+      const role = user.role;
+      res.json({ message: "Inicio de sesión exitoso", token, role });
     });
   }
 );

@@ -2,9 +2,7 @@ const express = require("express");
 const router = express.Router();
 const connection = require("../db"); // Conexión a la base de datos
 const auth = require("../middleware/auth"); // Middleware de autenticación
-const authorize = require("../middleware/authorize"); // Middleware de autorización
 const { body, validationResult } = require("express-validator"); // Para validaciones
-const changeHistoryRouter = require("./changeHistory"); // Ruta de cambios
 
 // Función para generar un API Key (implementación simple)
 const generateApiKey = () => {
@@ -20,9 +18,6 @@ router.post(
   [
     body("name").notEmpty().withMessage("El nombre del proyecto es requerido."),
     body("description").notEmpty().withMessage("La descripción es requerida."),
-    body("company_id")
-      .notEmpty()
-      .withMessage("El ID de la empresa es requerido."),
   ],
   (req, res) => {
     const errors = validationResult(req);
@@ -30,70 +25,92 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, description, company_id } = req.body;
+    const { name, description } = req.body;
+    const userId = req.userId; // Obtenemos el ID del usuario autenticado
 
-    const query =
-      "INSERT INTO projects (name, description, company_id) VALUES (?, ?, ?)";
-    connection.query(query, [name, description, company_id], (err, results) => {
+    // Consulta para obtener el company_id del usuario autenticado
+    const queryUser = "SELECT company_id FROM users WHERE id = ?";
+    connection.query(queryUser, [userId], (err, userResults) => {
       if (err) {
-        console.error("Error al crear el proyecto:", err);
-        return res.status(500).json({ message: "Error al crear el proyecto." });
+        console.error("Error al obtener la empresa del usuario:", err);
+        return res
+          .status(500)
+          .json({ message: "Error al obtener la empresa." });
       }
 
-      // Generar un token de autenticación (API Key)
-      const apiKey = generateApiKey();
+      if (userResults.length === 0) {
+        return res.status(404).json({ message: "Usuario no encontrado." });
+      }
 
-      // Actualizar el proyecto con el API Key
-      const updateQuery = "UPDATE projects SET api_key = ? WHERE id = ?";
-      connection.query(updateQuery, [apiKey, results.insertId], (err) => {
-        if (err) {
-          console.error("Error al asignar el API Key:", err);
-          return res
-            .status(500)
-            .json({ message: "Error al asignar el API Key." });
-        }
+      const companyId = userResults[0].company_id;
 
-        // Registrar el cambio
-        const action = "create"; // Acción realizada
-        const changed_fields = { name, description, company_id, apiKey };
-        const changeQuery =
-          "INSERT INTO change_history (feature_id, user_id, action, changed_fields) VALUES (?, ?, ?, ?)";
-        connection.query(
-          changeQuery,
-          [
-            results.insertId,
-            req.userId,
-            action,
-            JSON.stringify(changed_fields),
-          ],
-          (err) => {
-            if (err) {
-              console.error("Error al registrar el cambio:", err);
-            }
+      // Insertar el proyecto usando el company_id
+      const query =
+        "INSERT INTO projects (name, description, company_id) VALUES (?, ?, ?)";
+      connection.query(
+        query,
+        [name, description, companyId],
+        (err, results) => {
+          if (err) {
+            console.error("Error al crear el proyecto:", err);
+            return res
+              .status(500)
+              .json({ message: "Error al crear el proyecto." });
           }
-        );
 
-        res.status(201).json({
-          message: "Proyecto creado exitosamente",
-          projectId: results.insertId,
-          apiKey,
-        });
-      });
+          // Generar un token de autenticación (API Key)
+          const apiKey = generateApiKey();
+
+          // Actualizar el proyecto con el API Key
+          const updateQuery = "UPDATE projects SET api_key = ? WHERE id = ?";
+          connection.query(updateQuery, [apiKey, results.insertId], (err) => {
+            if (err) {
+              console.error("Error al asignar el API Key:", err);
+              return res
+                .status(500)
+                .json({ message: "Error al asignar el API Key." });
+            }
+
+            res.status(201).json({
+              message: "Proyecto creado exitosamente",
+              projectId: results.insertId,
+              apiKey,
+            });
+          });
+        }
+      );
     });
   }
 );
 
-// Leer todos los proyectos (solo administradores)
-router.get("/", authorize("admin"), (req, res) => {
-  const query = "SELECT * FROM projects";
-  connection.query(query, (err, results) => {
+// Leer todos los proyectos del usuario
+router.get("/", (req, res) => {
+  const userId = req.userId; // Obtén el ID del usuario autenticado
+
+  // Obtener el ID de la empresa del usuario
+  const queryUser = "SELECT company_id FROM users WHERE id = ?";
+  connection.query(queryUser, [userId], (err, userResults) => {
     if (err) {
-      console.error("Error al obtener los proyectos:", err);
-      return res
-        .status(500)
-        .json({ message: "Error al obtener los proyectos." });
+      console.error("Error al obtener la empresa del usuario:", err);
+      return res.status(500).json({ message: "Error al obtener la empresa." });
     }
-    res.json(results);
+
+    if (userResults.length === 0) {
+      return res.status(404).json({ message: "Usuario no encontrado." });
+    }
+    const companyId = userResults[0].company_id;
+
+    // Consultar proyectos filtrando por el ID de la empresa
+    const query = "SELECT * FROM projects WHERE company_id = ?";
+    connection.query(query, [companyId], (err, results) => {
+      if (err) {
+        console.error("Error al obtener los proyectos:", err);
+        return res
+          .status(500)
+          .json({ message: "Error al obtener los proyectos." });
+      }
+      res.json(results);
+    });
   });
 });
 
@@ -114,97 +131,41 @@ router.get("/:id", (req, res) => {
   });
 });
 
-// Actualizar un proyecto (solo administradores)
-router.put(
-  "/:id",
-  authorize("admin"),
-  [
-    body("name")
-      .optional()
-      .notEmpty()
-      .withMessage("El nombre del proyecto no puede estar vacío."),
-    body("description")
-      .optional()
-      .notEmpty()
-      .withMessage("La descripción no puede estar vacía."),
-    body("api_key")
-      .optional()
-      .notEmpty()
-      .withMessage("El API Key no puede estar vacío."),
-  ],
-  (req, res) => {
-    const projectId = req.params.id;
-    const { name, description, api_key } = req.body;
-
-    const query =
-      "UPDATE projects SET name = ?, description = ?, api_key = ? WHERE id = ?";
-    connection.query(
-      query,
-      [name, description, api_key, projectId],
-      (err, results) => {
-        if (err) {
-          console.error("Error al actualizar el proyecto:", err);
-          return res
-            .status(500)
-            .json({ message: "Error al actualizar el proyecto." });
-        }
-        if (results.affectedRows === 0) {
-          return res.status(404).json({ message: "Proyecto no encontrado." });
-        }
-
-        // Registrar el cambio
-        const action = "update"; // Acción realizada
-        const changed_fields = { name, description, api_key };
-        const changeQuery =
-          "INSERT INTO change_history (feature_id, user_id, action, changed_fields) VALUES (?, ?, ?, ?)";
-        connection.query(
-          changeQuery,
-          [projectId, req.userId, action, JSON.stringify(changed_fields)],
-          (err) => {
-            if (err) {
-              console.error("Error al registrar el cambio:", err);
-            }
-          }
-        );
-
-        res.json({ message: "Proyecto actualizado exitosamente" });
-      }
-    );
-  }
-);
-
-// Eliminar un proyecto (solo administradores)
-router.delete("/:id", authorize("admin"), (req, res) => {
+// Eliminar un proyecto (solo si no tiene features)
+router.delete("/:id", (req, res) => {
   const projectId = req.params.id;
 
-  const query = "DELETE FROM projects WHERE id = ?";
-  connection.query(query, [projectId], (err, results) => {
+  // Primero, verificar si el proyecto tiene features asociadas
+  const checkFeaturesQuery =
+    "SELECT COUNT(*) AS count FROM features WHERE project_id = ?";
+  connection.query(checkFeaturesQuery, [projectId], (err, results) => {
     if (err) {
-      console.error("Error al eliminar el proyecto:", err);
+      console.error("Error al verificar las features:", err);
       return res
         .status(500)
-        .json({ message: "Error al eliminar el proyecto." });
-    }
-    if (results.affectedRows === 0) {
-      return res.status(404).json({ message: "Proyecto no encontrado." });
+        .json({ message: "Error al verificar las features." });
     }
 
-    // Registrar el cambio
-    const action = "delete"; // Acción realizada
-    const changed_fields = { projectId };
-    const changeQuery =
-      "INSERT INTO change_history (feature_id, user_id, action, changed_fields) VALUES (?, ?, ?, ?)";
-    connection.query(
-      changeQuery,
-      [projectId, req.userId, action, JSON.stringify(changed_fields)],
-      (err) => {
-        if (err) {
-          console.error("Error al registrar el cambio:", err);
-        }
+    if (results[0].count > 0) {
+      return res.status(400).json({
+        message:
+          "No se puede eliminar un proyecto que tiene features asociadas.",
+      });
+    }
+
+    const query = "DELETE FROM projects WHERE id = ?";
+    connection.query(query, [projectId], (err, results) => {
+      if (err) {
+        console.error("Error al eliminar el proyecto:", err);
+        return res
+          .status(500)
+          .json({ message: "Error al eliminar el proyecto." });
       }
-    );
-
-    res.json({ message: "Proyecto eliminado exitosamente" });
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: "Proyecto no encontrado." });
+      }
+      res.json({ message: "Proyecto eliminado exitosamente" });
+    });
   });
 });
 
