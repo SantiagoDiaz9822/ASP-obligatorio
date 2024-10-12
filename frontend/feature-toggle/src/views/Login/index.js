@@ -1,10 +1,9 @@
 // src/views/Login/index.js
-import React, { useState, useEffect } from "react";
-import { LogInButton } from "./Wrapper"; // Asegúrate de que esto esté configurado
-import { toast } from "react-toastify";
-import { FormGroup, Label, Input } from "reactstrap";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios"; // Asegúrate de tener Axios instalado
+import { TextField, Button, Typography, Container, Paper } from "@mui/material"; // Importa componentes de MUI
+import { toast } from "react-toastify";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -30,8 +29,13 @@ const Login = () => {
         email: username,
         password,
       });
-      // Almacena el token en el localStorage
+
+      // Almacena el token y el email en el localStorage
       localStorage.setItem("token", response.data.token);
+      localStorage.setItem("userEmail", username.split("@")[0]); // Almacena la parte antes del '@'
+      console.log("userRole", response.data.role);
+      localStorage.setItem("userRole", response.data.role); // Almacena el rol del usuario
+
       toast.success("Inicio de sesión exitoso", {
         position: "bottom-right",
         autoClose: 5000,
@@ -41,6 +45,7 @@ const Login = () => {
         draggable: true,
         progress: undefined,
       });
+
       navigate("/"); // Redirigir al usuario a la página principal
     } catch (error) {
       let errorMessage = error.response
@@ -59,28 +64,47 @@ const Login = () => {
   };
 
   return (
-    <div>
-      <FormGroup>
-        <Label for="exampleText1">Email</Label>
-        <Input
-          id="exampleText1"
-          value={username}
-          name="text"
-          type="text"
-          onChange={(e) => setUsername(e.target.value)}
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label for="exampleText2">Password</Label>
-        <Input
-          id="exampleText2"
-          name="text"
-          type="password"
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </FormGroup>
-      <LogInButton onClick={handleLogIn}>Log in</LogInButton>
-    </div>
+    <Container maxWidth="sm" style={{ marginTop: "20px" }}>
+      <Paper elevation={3} style={{ padding: "20px" }}>
+        <Typography variant="h4" gutterBottom>
+          Iniciar Sesión
+        </Typography>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleLogIn();
+          }}
+        >
+          <TextField
+            label="Email"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+          <TextField
+            label="Contraseña"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            style={{ marginTop: "20px" }}
+          >
+            Iniciar Sesión
+          </Button>
+        </form>
+      </Paper>
+    </Container>
   );
 };
 
