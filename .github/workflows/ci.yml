@@ -1,0 +1,42 @@
+name: Node.js CI
+
+# Ejecutar este workflow en cada push o pull request a la rama principal
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x, 16.x, 18.x]  # Puedes especificar las versiones de Node.js que quieras probar
+
+    steps:
+    # Configurar el repositorio
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    # Configurar Node.js en la versión especificada en matrix.node-version
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    # Instalar dependencias de Node.js
+    - name: Install dependencies
+      run: npm install
+
+    # Ejecutar las pruebas
+    - name: Run tests
+      run: npm test
+
+    # Reportar el resultado de las pruebas
+    - name: Test Results
+      if: failure()
+      run: echo "Tests failed!"
