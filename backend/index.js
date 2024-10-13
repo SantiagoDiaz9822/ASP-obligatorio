@@ -18,7 +18,7 @@ const port = process.env.PORT || 3000;
 
 // Configurar CORS
 const corsOptions = {
-  origin: "http://localhost:3001", // Permitir solo tu frontend
+  origin: process.env.FRONTEND_URL, // Permitir solo tu frontend
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Métodos permitidos
   credentials: true, // Permitir credenciales (cookies)
 };
