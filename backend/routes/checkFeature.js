@@ -1,6 +1,27 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db"); // Conexión a la base de datos
+const redis = require("redis"); // Importa Redis para caching
+
+// Configura Redis usando la URL del archivo .env
+const redisClient = redis.createClient({
+  url: process.env.REDIS_URL,
+});
+
+// Conectar a Redis
+redisClient
+  .connect()
+  .then(() => {
+    console.log("Conectado a Redis");
+  })
+  .catch((err) => {
+    console.error("Error conectando a Redis:", err);
+  });
+
+// Maneja los errores de Redis
+redisClient.on("error", (err) => {
+  console.error("Redis error:", err);
+});
 
 // Ruta para consultar el estado de una característica mediante su feature_key
 router.post("/:feature_key", async (req, res) => {
@@ -14,63 +35,93 @@ router.post("/:feature_key", async (req, res) => {
       .json({ message: "feature_key y context son requeridos." });
   }
 
-  // Consultar la base de datos para obtener la característica
-  const query = "SELECT * FROM features WHERE feature_key = ?";
-  connection.query(query, [featureKey], (err, results) => {
-    if (err) {
-      console.error("Error al obtener la característica:", err);
-      return res
-        .status(500)
-        .json({ message: "Error al obtener la característica." });
-    }
-    if (results.length === 0) {
-      return res.status(404).json({ message: "Característica no encontrada." });
-    }
+  try {
+    // Primero, revisa el cache
+    const cachedData = await redisClient.get(featureKey);
+    let isFeatureEnabled;
 
-    const feature = results[0];
-
-    // Manejar posibles problemas al parsear feature.conditions
-    let conditions = [];
-    if (typeof feature.conditions === "string" && feature.conditions !== null) {
-      try {
-        conditions = JSON.parse(feature.conditions);
-      } catch (e) {
-        console.error("Error al parsear feature.conditions:", e);
-        conditions = [];
-      }
-    } else if (Array.isArray(feature.conditions)) {
-      conditions = feature.conditions;
+    if (cachedData) {
+      // Si hay datos en el cache, parseamos y usamos el valor
+      isFeatureEnabled = JSON.parse(cachedData).value;
     } else {
-      console.error(
-        "feature.conditions no es ni string ni array:",
-        feature.conditions
-      );
-    }
+      // Consultar la base de datos para obtener la característica
+      const query = "SELECT * FROM features WHERE feature_key = ?";
+      const results = await new Promise((resolve, reject) => {
+        connection.query(query, [featureKey], (err, results) => {
+          if (err) {
+            reject(err);
+          }
+          resolve(results);
+        });
+      });
 
-    // Evaluar si el feature está habilitado
-    const isFeatureEnabled = evaluateConditions(conditions, context);
-
-    // Registrar el uso del feature
-    const usageLogQuery =
-      "INSERT INTO usage_logs (feature_id, project_id, context, response, created_at) VALUES (?, ?, ?, ?, NOW())";
-    connection.query(
-      usageLogQuery,
-      [
-        feature.id,
-        feature.project_id,
-        JSON.stringify(context),
-        isFeatureEnabled,
-      ],
-      (err) => {
-        if (err) {
-          console.error("Error al registrar el uso:", err);
-        }
+      if (results.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Característica no encontrada." });
       }
-    );
+
+      const feature = results[0];
+
+      // Manejar posibles problemas al parsear feature.conditions
+      let conditions = [];
+      if (
+        typeof feature.conditions === "string" &&
+        feature.conditions !== null
+      ) {
+        try {
+          conditions = JSON.parse(feature.conditions);
+        } catch (e) {
+          console.error("Error al parsear feature.conditions:", e);
+          conditions = [];
+        }
+      } else if (Array.isArray(feature.conditions)) {
+        conditions = feature.conditions;
+      } else {
+        console.error(
+          "feature.conditions no es ni string ni array:",
+          feature.conditions
+        );
+      }
+
+      // Evaluar si el feature está habilitado
+      isFeatureEnabled = evaluateConditions(conditions, context);
+
+      // Almacenar el resultado en cache
+      await redisClient.setEx(
+        featureKey,
+        3600,
+        JSON.stringify({ value: isFeatureEnabled })
+      );
+
+      // Registrar el uso del feature
+      const usageLogQuery =
+        "INSERT INTO usage_logs (feature_id, project_id, context, response, created_at) VALUES (?, ?, ?, ?, NOW())";
+      await new Promise((resolve, reject) => {
+        connection.query(
+          usageLogQuery,
+          [
+            feature.id,
+            feature.project_id,
+            JSON.stringify(context),
+            isFeatureEnabled,
+          ],
+          (err) => {
+            if (err) {
+              reject(err);
+            }
+            resolve();
+          }
+        );
+      });
+    }
 
     // Devolver el estado de la característica
-    res.json({ value: isFeatureEnabled });
-  });
+    return res.json({ value: isFeatureEnabled });
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({ message: "Error interno del servidor." });
+  }
 });
 
 // Función para evaluar condiciones

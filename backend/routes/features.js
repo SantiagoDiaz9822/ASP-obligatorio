@@ -107,20 +107,6 @@ router.post(
   }
 );
 
-// Leer todas las features (solo administradores)
-router.get("/", authorize("admin"), (req, res) => {
-  const query = "SELECT * FROM features";
-  connection.query(query, (err, results) => {
-    if (err) {
-      console.error("Error al obtener las features:", err);
-      return res
-        .status(500)
-        .json({ message: "Error al obtener las features." });
-    }
-    res.json(results);
-  });
-});
-
 // Leer una feature por ID
 router.get("/:id", (req, res) => {
   const featureId = req.params.id;

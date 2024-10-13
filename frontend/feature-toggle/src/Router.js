@@ -2,6 +2,7 @@ import { Route, Routes, Outlet } from "react-router-dom";
 import PrivateRoute from "./components/PrivateRoute";
 import Login from "./views/Login";
 import Companies from "./views/Companies";
+import CreateCompany from "./views/CreateCompany";
 import AssignUser from "./views/AssignUser";
 import AdminPanel from "./views/AdminPanel";
 import CreateUser from "./views/CreateUser";
@@ -30,12 +31,11 @@ const RouterPage = () => {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route element={<Layout />}>
-        {" "}
-        {/* Aquí se renderiza NavBar junto con las rutas anidadas */}
         <Route
           path="/companies"
           element={<PrivateRoute element={<Companies />} />}
         />
+        <Route path="/create-company" element={<CreateCompany />} />
         <Route
           path="/assign-user/:companyId"
           element={<PrivateRoute element={<AssignUser />} />}

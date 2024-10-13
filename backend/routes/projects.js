@@ -35,7 +35,7 @@ router.post(
         console.error("Error al obtener la empresa del usuario:", err);
         return res
           .status(500)
-          .json({ message: "Error al obtener la empresa." });
+          .json({ message: "Error al obtener la empresa del usuario." });
       }
 
       if (userResults.length === 0) {
@@ -109,6 +109,12 @@ router.get("/", (req, res) => {
           .status(500)
           .json({ message: "Error al obtener los proyectos." });
       }
+
+      // Si no hay proyectos, devuelve una lista vacía
+      if (results.length === 0) {
+        return res.status(200).json([]);
+      }
+
       res.json(results);
     });
   });
