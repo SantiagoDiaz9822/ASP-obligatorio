@@ -84,6 +84,7 @@ router.post(
     }
   }
 );
+
 // Nueva ruta para asignar un usuario a una empresa
 router.post(
   "/assign-to-company",
@@ -170,7 +171,13 @@ router.post(
         }
       );
       const role = user.role;
-      res.json({ message: "Inicio de sesión exitoso", token, role });
+      const company_id = user.company_id;
+      res.json({
+        message: "Inicio de sesión exitoso",
+        token,
+        role,
+        company_id,
+      });
     });
   }
 );
