@@ -1,5 +1,8 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+const multerS3 = require("multer-s3");
+const aws = require("aws-sdk");
 const connection = require("../db");
 const auth = require("../middleware/auth");
 const authorize = require("../middleware/authorize");
@@ -7,17 +10,39 @@ const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
 const transporter = require("../mailer"); // Asegúrate de que tu transportador esté configurado
 
+// Configura AWS S3
+const s3 = new aws.S3({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  sessionToken: process.env.AWS_SESSION_TOKEN, // Agregar esto para las credenciales temporales
+  region: process.env.AWS_REGION,
+});
+
+// Configurar multer para subir a S3
+const upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: process.env.AWS_S3_BUCKET_NAME,
+    metadata: function (req, file, cb) {
+      cb(null, { fieldName: file.fieldname });
+    },
+    key: function (req, file, cb) {
+      cb(null, `logos/${Date.now().toString()}_${file.originalname}`);
+    },
+  }),
+});
+
 // Ruta para registrar una nueva empresa (solo administradores)
 router.post(
   "/new",
   auth,
   authorize("admin"),
+  upload.single("logo"), // Middleware para manejar la subida del logo
   [
     body("name")
       .notEmpty()
       .withMessage("El nombre de la empresa es requerido."),
     body("address").notEmpty().withMessage("La dirección es requerida."),
-    body("logo_url").notEmpty().withMessage("La URL del logo es requerida."),
   ],
   (req, res) => {
     const errors = validationResult(req);
@@ -25,61 +50,21 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, address, logo_url, users } = req.body;
+    const { name, address } = req.body;
+    const logoUrl = req.file.location; // Obtén la URL del archivo subido
 
     const query =
       "INSERT INTO companies (name, address, logo_url) VALUES (?, ?, ?)";
-    connection.query(query, [name, address, logo_url], (err, results) => {
+    connection.query(query, [name, address, logoUrl], (err, results) => {
       if (err) {
         console.error("Error al crear la empresa:", err);
         return res.status(500).json({ message: "Error al crear la empresa." });
       }
-
       const companyId = results.insertId;
-
-      // Crear usuarios asociados si se proporcionan
-      if (users && users.length > 0) {
-        users.forEach(async (user) => {
-          const { email, password, role } = user;
-
-          // Hashear la contraseña
-          const hashedPassword = await bcrypt.hash(password, 10);
-          const userQuery =
-            "INSERT INTO users (company_id, email, password_hash, role) VALUES (?, ?, ?, ?)";
-
-          connection.query(
-            userQuery,
-            [companyId, email, hashedPassword, role],
-            (err) => {
-              if (err) {
-                console.error("Error al crear el usuario:", err);
-              } else {
-                // Enviar correo electrónico de bienvenida
-                const mailOptions = {
-                  from: process.env.EMAIL_USER,
-                  to: email,
-                  subject: "Bienvenido a Nuestra Aplicación",
-                  text: `Hola,\n\nGracias por registrarte en nuestra aplicación. 
-                  Puedes realizar tu primer inicio de sesión usando el siguiente enlace:\n
-                  http://tu_dominio.com/reset-password?email=${email}\n\n¡Bienvenido a bordo!`,
-                };
-
-                transporter.sendMail(mailOptions, (error, info) => {
-                  if (error) {
-                    console.error("Error al enviar el correo:", error);
-                  } else {
-                    console.log("Correo enviado:", info.response);
-                  }
-                });
-              }
-            }
-          );
-        });
-      }
 
       res
         .status(201)
-        .json({ message: "Empresa creada exitosamente", companyId });
+        .json({ message: "Empresa creada exitosamente", companyId, logoUrl });
     });
   }
 );
@@ -110,7 +95,7 @@ router.post(
     // Hashear la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
     const userQuery =
-      "INSERT INTO users (company_id, email, password_hash, role) VALUES (?, ?, ?, ?)";
+      "INSERT INTO users (company_id, email, password_hash, role, first_login) VALUES (?, ?, ?, ?, false)"; // Almacenar first_login como false
 
     connection.query(
       userQuery,
@@ -122,6 +107,24 @@ router.post(
             .status(500)
             .json({ message: "Error al crear el usuario." });
         }
+
+        // Enviar correo electrónico de bienvenida
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: "Bienvenido a Nuestra Aplicación",
+          text: `Hola,\n\nGracias por registrarte en nuestra aplicación. 
+          Puedes realizar tu primer inicio de sesión usando el siguiente enlace:\n
+          http://localhost:3001/reset-password?email=${email}\n\n¡Bienvenido a bordo!`,
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error("Error al enviar el correo:", error);
+          } else {
+            console.log("Correo enviado:", info.response);
+          }
+        });
 
         res.status(201).json({
           message: "Usuario creado exitosamente",

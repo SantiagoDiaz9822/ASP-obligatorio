@@ -1,30 +1,32 @@
 // src/views/CreateCompany.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; 
+import axios from "axios";
 import { TextField, Button, Typography, Container, Paper } from "@mui/material";
-import { toast } from "react-toastify"; 
+import { toast } from "react-toastify";
 
 const CreateCompany = () => {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
-  const navigate = useNavigate(); 
+  const [logo, setLogo] = useState(null); // Cambiar a estado para el archivo
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
 
+    const formData = new FormData(); // Crear un objeto FormData para manejar la carga de archivos
+    formData.append("name", name);
+    formData.append("address", address);
+    formData.append("logo", logo); // Agregar el archivo de logo
+
     try {
-      await axios.post(
-        "http://localhost:3000/companies/new",
-        { name, address, logo_url: logoUrl },
-        {
-          headers: {
-            Authorization: `${token}`,
-          },
-        }
-      );
+      await axios.post("http://localhost:3000/companies/new", formData, {
+        headers: {
+          Authorization: `${token}`,
+          "Content-Type": "multipart/form-data", // Especificar el tipo de contenido
+        },
+      });
       // Mostrar el mensaje de éxito
       toast.success("Empresa creada exitosamente!", {
         position: "bottom-right",
@@ -37,7 +39,7 @@ const CreateCompany = () => {
       // Redirigir a la página de empresas
       navigate("/companies");
     } catch (error) {
-      console.error("Error creating company:", error);
+      console.error("Error creando la empresa:", error);
       // Mostrar el mensaje de error
       toast.error("Error al crear la empresa.", {
         position: "bottom-right",
@@ -75,13 +77,10 @@ const CreateCompany = () => {
             onChange={(e) => setAddress(e.target.value)}
             required
           />
-          <TextField
-            label="URL del Logo"
-            variant="outlined"
-            fullWidth
-            margin="normal"
-            value={logoUrl}
-            onChange={(e) => setLogoUrl(e.target.value)}
+          <input
+            type="file" // Cambiar a input de tipo archivo
+            accept="image/*" // Aceptar solo imágenes
+            onChange={(e) => setLogo(e.target.files[0])} // Guardar el archivo seleccionado
             required
           />
           <Button

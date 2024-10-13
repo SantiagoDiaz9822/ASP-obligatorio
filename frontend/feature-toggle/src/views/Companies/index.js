@@ -73,7 +73,15 @@ const Companies = () => {
                 <TableCell>{company.name}</TableCell>
                 <TableCell>{company.address}</TableCell>
                 <TableCell>
-                  <img src={company.logo_url} alt="Logo" width={50} />
+                  <img
+                    src={company.logo_url}
+                    alt="Logo"
+                    style={{
+                      width: "50px",
+                      height: "auto",
+                      borderRadius: "4px",
+                    }} // Asegúrate de que el logo no sea demasiado grande
+                  />
                 </TableCell>
                 <TableCell>
                   <Button
