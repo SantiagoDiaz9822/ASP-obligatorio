@@ -62,7 +62,7 @@ router.post(
           subject: "Bienvenido a Nuestra Aplicación",
           text: `Hola,\n\nGracias por registrarte en nuestra aplicación. 
           Puedes realizar tu primer inicio de sesión usando el siguiente enlace:\n
-          http://localhost:3001/reset-password?token=${token}\n\n¡Bienvenido a bordo!`,
+          ${process.env.FRONTEND_URL}/reset-password?token=${token}\n\n¡Bienvenido a bordo!`,
         };
 
         transporter.sendMail(mailOptions, (error, info) => {
