@@ -29,7 +29,7 @@ router.post(
       .isArray()
       .withMessage("Las condiciones deben ser un array."),
   ],
-  auth, // Solo autenticación, sin necesidad de que sea admin
+  auth,
   (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
