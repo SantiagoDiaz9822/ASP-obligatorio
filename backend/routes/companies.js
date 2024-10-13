@@ -150,7 +150,7 @@ router.get("/", auth, authorize("admin"), (req, res) => {
 });
 
 // Leer una empresa por ID (protegida, solo administradores)
-router.get("/:id", auth, authorize("admin"), (req, res) => {
+router.get("/:id", auth, (req, res) => {
   const companyId = req.params.id;
 
   const query = "SELECT * FROM companies WHERE id = ?";

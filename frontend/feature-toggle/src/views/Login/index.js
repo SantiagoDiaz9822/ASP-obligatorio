@@ -33,8 +33,8 @@ const Login = () => {
       // Almacena el token y el email en el localStorage
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("userEmail", username.split("@")[0]); // Almacena la parte antes del '@'
-      console.log("userRole", response.data.role);
       localStorage.setItem("userRole", response.data.role); // Almacena el rol del usuario
+      localStorage.setItem("companyId", response.data.company_id); // Almacena el ID de la empresa
 
       toast.success("Inicio de sesión exitoso", {
         position: "bottom-right",
