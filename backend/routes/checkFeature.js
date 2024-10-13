@@ -48,9 +48,25 @@ router.post("/:feature_key", async (req, res) => {
     }
 
     // Evaluar si el feature está habilitado
-    const isFeatureEnabled =
-      feature.state === "on" &&
-      (conditions.length === 0 || evaluateConditions(conditions, context));
+    const isFeatureEnabled = evaluateConditions(conditions, context);
+
+    // Registrar el uso del feature
+    const usageLogQuery =
+      "INSERT INTO usage_logs (feature_id, project_id, context, response, created_at) VALUES (?, ?, ?, ?, NOW())";
+    connection.query(
+      usageLogQuery,
+      [
+        feature.id,
+        feature.project_id,
+        JSON.stringify(context),
+        isFeatureEnabled,
+      ],
+      (err) => {
+        if (err) {
+          console.error("Error al registrar el uso:", err);
+        }
+      }
+    );
 
     // Devolver el estado de la característica
     res.json({ value: isFeatureEnabled });

@@ -11,7 +11,6 @@ const JWT_SECRET = process.env.JWT_SECRET; // Cargar el secreto desde .env
 const auth = require("../middleware/auth"); // Middleware de autenticación
 const authorize = require("../middleware/authorize"); // Middleware de autorización
 
-// Ruta para registrar un nuevo usuario (solo administradores)
 router.post(
   "/register",
   auth,
@@ -36,8 +35,9 @@ router.post(
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      // Inicializar first_login en false
       const query =
-        "INSERT INTO users (email, password_hash, role, first_login) VALUES (?, ?, ?, true)";
+        "INSERT INTO users (email, password_hash, role, first_login) VALUES (?, ?, ?, false)";
       connection.query(query, [email, hashedPassword, role], (err, results) => {
         if (err) {
           console.error("Error al crear el usuario:", err);
@@ -48,7 +48,7 @@ router.post(
 
         // Generar un token para el primer inicio de sesión
         const token = jwt.sign(
-          { email }, // Solo pasamos el email, ya no tenemos company_id
+          { email }, // Solo pasamos el email
           process.env.JWT_SECRET,
           {
             expiresIn: "1h", // El token expirará en 1 hora
@@ -61,8 +61,8 @@ router.post(
           to: email,
           subject: "Bienvenido a Nuestra Aplicación",
           text: `Hola,\n\nGracias por registrarte en nuestra aplicación. 
-            Puedes realizar tu primer inicio de sesión usando el siguiente enlace:\n
-            http://tu_dominio.com/reset-password?token=${token}\n\n¡Bienvenido a bordo!`,
+          Puedes realizar tu primer inicio de sesión usando el siguiente enlace:\n
+          http://localhost:3001/reset-password?token=${token}\n\n¡Bienvenido a bordo!`,
         };
 
         transporter.sendMail(mailOptions, (error, info) => {
@@ -84,7 +84,6 @@ router.post(
     }
   }
 );
-
 // Nueva ruta para asignar un usuario a una empresa
 router.post(
   "/assign-to-company",
@@ -154,6 +153,14 @@ router.post(
         return res.status(401).json({ message: "Credenciales incorrectas." });
       }
 
+      // Verificar si el usuario ha restablecido su contraseña
+      if (!user.first_login) {
+        // Cambiado de `if (user.first_login)`
+        return res.status(403).json({
+          message: "Debes restablecer tu contraseña antes de iniciar sesión.",
+        });
+      }
+
       // Generar un token JWT
       const token = jwt.sign(
         { id: user.id, role: user.role, company_id: user.company_id },
@@ -192,34 +199,30 @@ router.post(
       }
 
       // Extraer información del token
-      const { email, company_id } = decoded;
+      const { email } = decoded;
 
-      // Actualizar la contraseña
+      // Actualizar la contraseña y marcar que el usuario ya realizó el primer login
       const hashedPassword = await bcrypt.hash(new_password, 10);
       const updateQuery =
-        "UPDATE users SET password_hash = ?, first_login = false WHERE email = ? AND company_id = ?";
+        "UPDATE users SET password_hash = ?, first_login = true WHERE email = ?";
 
-      connection.query(
-        updateQuery,
-        [hashedPassword, email, company_id],
-        (err, results) => {
-          if (err) {
-            console.error("Error al actualizar la contraseña:", err);
-            return res
-              .status(500)
-              .json({ message: "Error al actualizar la contraseña." });
-          }
-
-          if (results.affectedRows === 0) {
-            return res.status(404).json({ message: "Usuario no encontrado." });
-          }
-
-          res.json({
-            message:
-              "Contraseña restablecida exitosamente. Ahora puedes iniciar sesión.",
-          });
+      connection.query(updateQuery, [hashedPassword, email], (err, results) => {
+        if (err) {
+          console.error("Error al actualizar la contraseña:", err);
+          return res
+            .status(500)
+            .json({ message: "Error al actualizar la contraseña." });
         }
-      );
+
+        if (results.affectedRows === 0) {
+          return res.status(404).json({ message: "Usuario no encontrado." });
+        }
+
+        res.json({
+          message:
+            "Contraseña restablecida exitosamente. Ahora puedes iniciar sesión.",
+        });
+      });
     });
   }
 );
@@ -286,21 +289,6 @@ router.put(
         return res.status(404).json({ message: "Usuario no encontrado." });
       }
 
-      // Registrar el cambio
-      const action = "update"; // Acción realizada
-      const changed_fields = { email, role };
-      const changeQuery =
-        "INSERT INTO change_history (user_id, action, changed_fields) VALUES (?, ?, ?)";
-      connection.query(
-        changeQuery,
-        [userId, action, JSON.stringify(changed_fields)],
-        (err) => {
-          if (err) {
-            console.error("Error al registrar el cambio:", err);
-          }
-        }
-      );
-
       res.json({ message: "Usuario actualizado exitosamente" });
     });
   }
@@ -319,21 +307,6 @@ router.delete("/:id", auth, authorize("admin"), (req, res) => {
     if (results.affectedRows === 0) {
       return res.status(404).json({ message: "Usuario no encontrado." });
     }
-
-    // Registrar el cambio
-    const action = "delete"; // Acción realizada
-    const changed_fields = { userId };
-    const changeQuery =
-      "INSERT INTO change_history (user_id, action, changed_fields) VALUES (?, ?, ?)";
-    connection.query(
-      changeQuery,
-      [userId, action, JSON.stringify(changed_fields)],
-      (err) => {
-        if (err) {
-          console.error("Error al registrar el cambio:", err);
-        }
-      }
-    );
 
     res.json({ message: "Usuario eliminado exitosamente" });
   });

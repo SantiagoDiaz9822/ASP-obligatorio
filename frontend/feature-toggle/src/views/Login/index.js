@@ -1,8 +1,8 @@
 // src/views/Login/index.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // Asegúrate de tener Axios instalado
-import { TextField, Button, Typography, Container, Paper } from "@mui/material"; // Importa componentes de MUI
+import axios from "axios";
+import { TextField, Button, Typography, Container, Paper } from "@mui/material";
 import { toast } from "react-toastify";
 
 const Login = () => {
@@ -46,7 +46,7 @@ const Login = () => {
         progress: undefined,
       });
 
-      navigate("/"); // Redirigir al usuario a la página principal
+      navigate("/companies"); // Redirigir al usuario a la página principal
     } catch (error) {
       let errorMessage = error.response
         ? error.response.data.message

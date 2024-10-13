@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
@@ -7,8 +7,6 @@ import MenuIcon from "@mui/icons-material/Menu";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import CameraEnhanceOutlinedIcon from "@mui/icons-material/CameraEnhanceOutlined";
-import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PersonIcon from "@mui/icons-material/Person";
 import { useNavigate } from "react-router-dom";
 
@@ -68,18 +66,6 @@ const NavBar = () => {
             >
               <MenuIcon />
             </IconButton>
-            <Button
-              color="inherit"
-              component={Link}
-              to="/"
-              style={{ color: "black" }}
-            >
-              <HomeOutlinedIcon
-                fontSize="small"
-                style={{ marginRight: "2px" }}
-              />
-              Home
-            </Button>
 
             <Button
               color="inherit"
@@ -87,7 +73,7 @@ const NavBar = () => {
               to="/companies"
               style={{ color: "black" }}
             >
-              Companies
+              Empresas
             </Button>
             <Button
               color="inherit"
@@ -95,7 +81,23 @@ const NavBar = () => {
               to="/projects"
               style={{ color: "black" }}
             >
-              Projects
+              Proyectos
+            </Button>
+            <Button
+              color="inherit"
+              component={Link}
+              to="/change-history"
+              style={{ color: "black" }}
+            >
+              Historial de Cambios
+            </Button>
+            <Button
+              color="inherit"
+              component={Link}
+              to="/usage-log"
+              style={{ color: "black" }}
+            >
+              Reporte de Uso
             </Button>
           </div>
           <Button
