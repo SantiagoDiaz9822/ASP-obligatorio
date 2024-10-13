@@ -16,7 +16,7 @@ const CreateProject = () => {
 
     try {
       await axios.post(
-        "http://localhost:3000/projects/new",
+        process.env.REACT_APP_BACKEND_URL + "/projects/new",
         {
           name,
           description,

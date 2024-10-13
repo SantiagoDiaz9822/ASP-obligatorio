@@ -32,11 +32,14 @@ const AdminPanel = () => {
     const fetchUsers = async () => {
       const token = localStorage.getItem("token");
       try {
-        const response = await axios.get("http://localhost:3000/users", {
-          headers: {
-            Authorization: `${token}`,
-          },
-        });
+        const response = await axios.get(
+          process.env.REACT_APP_BACKEND_URL + "/users",
+          {
+            headers: {
+              Authorization: `${token}`,
+            },
+          }
+        );
         setUsers(response.data);
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -64,11 +67,14 @@ const AdminPanel = () => {
   const handleDeleteUser = async () => {
     const token = localStorage.getItem("token");
     try {
-      await axios.delete(`http://localhost:3000/users/${userIdToDelete}`, {
-        headers: {
-          Authorization: `${token}`,
-        },
-      });
+      await axios.delete(
+        process.env.REACT_APP_BACKEND_URL + `/users/${userIdToDelete}`,
+        {
+          headers: {
+            Authorization: `${token}`,
+          },
+        }
+      );
       setUsers(users.filter((user) => user.id !== userIdToDelete)); // Actualizar la lista de usuarios
       toast.success("Usuario eliminado exitosamente.", {
         position: "bottom-right",

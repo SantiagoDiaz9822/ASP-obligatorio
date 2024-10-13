@@ -25,10 +25,13 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:3000/users/login", {
-        email: username,
-        password,
-      });
+      const response = await axios.post(
+        process.env.REACT_APP_BACKEND_URL + "/users/login",
+        {
+          email: username,
+          password,
+        }
+      );
 
       // Almacena el token y el email en el localStorage
       localStorage.setItem("token", response.data.token);

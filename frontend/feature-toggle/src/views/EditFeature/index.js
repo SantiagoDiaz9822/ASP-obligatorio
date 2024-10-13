@@ -18,7 +18,7 @@ const EditFeature = () => {
       const token = localStorage.getItem("token");
       try {
         const response = await axios.get(
-          `http://localhost:3000/features/${featureId}`,
+          process.env.REACT_APP_BACKEND_URL + `/features/${featureId}`,
           {
             headers: {
               Authorization: `${token}`,
@@ -44,7 +44,7 @@ const EditFeature = () => {
 
     try {
       await axios.put(
-        `http://localhost:3000/features/${featureId}`,
+        process.env.REACT_APP_BACKEND_URL + `/features/${featureId}`,
         {
           feature_key: featureKey,
           description,
