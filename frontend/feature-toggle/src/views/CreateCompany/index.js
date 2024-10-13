@@ -21,12 +21,16 @@ const CreateCompany = () => {
     formData.append("logo", logo); // Agregar el archivo de logo
 
     try {
-      await axios.post("http://localhost:3000/companies/new", formData, {
-        headers: {
-          Authorization: `${token}`,
-          "Content-Type": "multipart/form-data", // Especificar el tipo de contenido
-        },
-      });
+      await axios.post(
+        process.env.REACT_APP_BACKEND_URL + "/companies/new",
+        formData,
+        {
+          headers: {
+            Authorization: `${token}`,
+            "Content-Type": "multipart/form-data", // Especificar el tipo de contenido
+          },
+        }
+      );
       // Mostrar el mensaje de éxito
       toast.success("Empresa creada exitosamente!", {
         position: "bottom-right",

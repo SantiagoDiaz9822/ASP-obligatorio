@@ -30,17 +30,20 @@ const ChangeHistory = () => {
   const fetchChanges = async () => {
     const token = localStorage.getItem("token");
     try {
-      const response = await axios.get("http://localhost:3000/change-history", {
-        headers: {
-          Authorization: `${token}`,
-        },
-        params: {
-          startDate,
-          endDate,
-          feature_key: featureKey,
-          user_id: userId,
-        },
-      });
+      const response = await axios.get(
+        process.env.REACT_APP_BACKEND_URL + "/change-history",
+        {
+          headers: {
+            Authorization: `${token}`,
+          },
+          params: {
+            startDate,
+            endDate,
+            feature_key: featureKey,
+            user_id: userId,
+          },
+        }
+      );
       setChanges(response.data);
     } catch (error) {
       toast.error("Error al obtener el historial de cambios.");

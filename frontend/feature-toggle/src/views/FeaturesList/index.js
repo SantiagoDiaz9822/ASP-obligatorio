@@ -25,7 +25,7 @@ const FeaturesList = () => {
       const token = localStorage.getItem("token");
       try {
         const response = await axios.get(
-          `http://localhost:3000/projects/${projectId}/features`,
+          process.env.REACT_APP_BACKEND_URL + `/projects/${projectId}/features`,
           {
             headers: {
               Authorization: `${token}`,
@@ -44,11 +44,14 @@ const FeaturesList = () => {
   const handleDelete = async (featureId) => {
     const token = localStorage.getItem("token");
     try {
-      await axios.delete(`http://localhost:3000/features/${featureId}`, {
-        headers: {
-          Authorization: `${token}`,
-        },
-      });
+      await axios.delete(
+        process.env.REACT_APP_BACKEND_URL + `/features/${featureId}`,
+        {
+          headers: {
+            Authorization: `${token}`,
+          },
+        }
+      );
       toast.success("Feature eliminado exitosamente.");
       setFeatures(features.filter((feature) => feature.id !== featureId));
     } catch (error) {

@@ -36,7 +36,7 @@ const Companies = () => {
           const companyId = localStorage.getItem("companyId");
           try {
             const response = await axios.get(
-              `http://localhost:3000/companies/${companyId}`,
+              process.env.REACT_APP_BACKEND_URL + `/companies/${companyId}`,
               {
                 headers: {
                   Authorization: `${token}`,
@@ -58,11 +58,14 @@ const Companies = () => {
     const fetchCompanies = async () => {
       const token = localStorage.getItem("token");
       try {
-        const response = await axios.get("http://localhost:3000/companies", {
-          headers: {
-            Authorization: `${token}`,
-          },
-        });
+        const response = await axios.get(
+          process.env.REACT_APP_BACKEND_URL + "/companies",
+          {
+            headers: {
+              Authorization: `${token}`,
+            },
+          }
+        );
         setCompanies(response.data);
       } catch (error) {
         console.error("Error fetching companies:", error);

@@ -24,11 +24,14 @@ const AssignUser = () => {
     const fetchUsers = async () => {
       const token = localStorage.getItem("token");
       try {
-        const response = await axios.get("http://localhost:3000/users", {
-          headers: {
-            Authorization: `${token}`,
-          },
-        });
+        const response = await axios.get(
+          process.env.REACT_APP_BACKEND_URL + "/users",
+          {
+            headers: {
+              Authorization: `${token}`,
+            },
+          }
+        );
         setUsers(response.data);
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -44,7 +47,7 @@ const AssignUser = () => {
 
     try {
       await axios.post(
-        "http://localhost:3000/users/assign-to-company",
+        process.env.REACT_APP_BACKEND_URL + "/users/assign-to-company",
         { user_id: selectedUser, company_id: companyId },
         {
           headers: {

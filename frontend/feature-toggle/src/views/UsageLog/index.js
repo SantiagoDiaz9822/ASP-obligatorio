@@ -25,7 +25,7 @@ const UsageReport = () => {
 
     try {
       const response = await axios.get(
-        "http://localhost:3000/usage-logs/report",
+        process.env.REACT_APP_BACKEND_URL + "/usage-logs/report",
         {
           params: {
             startDate,

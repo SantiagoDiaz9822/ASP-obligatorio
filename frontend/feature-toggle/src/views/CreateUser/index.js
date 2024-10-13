@@ -29,7 +29,7 @@ const CreateUser = ({ companyId }) => {
     try {
       const token = localStorage.getItem("token"); // Recuperar el token del localStorage
       await axios.post(
-        `http://localhost:3000/users/register`, // Ajusta la ruta si es necesario
+        process.env.REACT_APP_BACKEND_URL + `/users/register`, // Ajusta la ruta si es necesario
         {
           company_id: companyId, // Incluye el ID de la compañía
           email,

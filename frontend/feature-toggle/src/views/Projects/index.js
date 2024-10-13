@@ -18,17 +18,19 @@ import { toast } from "react-toastify";
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchProjects = async () => {
       const token = localStorage.getItem("token");
       try {
-        const response = await axios.get("http://localhost:3000/projects", {
-          headers: {
-            Authorization: `${token}`,
-          },
-        });
+        const response = await axios.get(
+          process.env.REACT_APP_BACKEND_URL + "/projects",
+          {
+            headers: {
+              Authorization: `${token}`,
+            },
+          }
+        );
         setProjects(response.data);
       } catch (error) {
         console.error("Error fetching projects:", error);

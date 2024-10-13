@@ -21,7 +21,7 @@ const CreateFeature = () => {
 
     try {
       await axios.post(
-        "http://localhost:3000/features/new",
+        process.env.REACT_APP_BACKEND_URL + "/features/new",
         {
           project_id: projectId,
           feature_key: featureKey,
