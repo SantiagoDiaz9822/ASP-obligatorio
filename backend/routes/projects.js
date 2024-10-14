@@ -298,7 +298,7 @@ router.delete("/:id", (req, res) => {
       if (results.affectedRows === 0) {
         return res.status(404).json({ message: "Proyecto no encontrado." });
       }
-      res.json({ message: "Proyecto eliminado exitosamente." });
+      res.json({ message: "Proyecto eliminado exitosamente" });
     });
   });
 });
