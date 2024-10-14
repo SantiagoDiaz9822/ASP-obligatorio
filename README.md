@@ -12,7 +12,7 @@ Primero, clona el repositorio en tu máquina local:
 
 ```git clone https://github.com/SantiagoDiaz9822/ASP-obligatorio.git ```
 
-```cd tu_repositorio```
+```cd ASP-obligatorio```
 
 ### 2. Instalar dependencias
 
@@ -25,6 +25,8 @@ Primero, clona el repositorio en tu máquina local:
 #### Para el frontend:
 
 ```cd frontend```
+
+```cd feature-toggle```
 
 ```npm install```
 
@@ -43,6 +45,8 @@ Copia el archivo .env.tex a .env y ajusta las configuraciones según sea necesar
 #### Para iniciar el frontend:
 
 ```cd frontend```
+
+```cd feature-toggle```
 
 ```npm start```
 
