@@ -2,13 +2,53 @@ const express = require("express");
 const router = express.Router();
 const connection = require("../db");
 const auth = require("../middleware/auth");
-const { body, validationResult } = require("express-validator"); 
-const changeHistoryRouter = require("./changeHistory"); 
+const { body, validationResult } = require("express-validator");
 
 // Rutas protegidas (usa el middleware de autenticación)
 router.use(auth);
 
 // Ruta para definir un nuevo feature (protegida)
+/**
+ * @swagger
+ * /features/new:
+ *   post:
+ *     summary: Crear una nueva feature
+ *     tags: [Features]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               project_id:
+ *                 type: string
+ *                 description: ID del proyecto
+ *               feature_key:
+ *                 type: string
+ *                 description: Clave única de la feature
+ *               description:
+ *                 type: string
+ *                 description: Descripción de la feature
+ *               state:
+ *                 type: string
+ *                 enum: [on, off]
+ *                 description: Estado de la feature
+ *               conditions:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Condiciones de la feature
+ *     responses:
+ *       201:
+ *         description: Feature creada exitosamente
+ *       400:
+ *         description: Errores de validación
+ *       500:
+ *         description: Error al crear la feature
+ */
 router.post(
   "/new",
   [
@@ -68,7 +108,7 @@ router.post(
               .json({ message: "Error al crear el feature." });
           }
 
-          const action = "create"; 
+          const action = "create";
           const changed_fields = {
             project_id,
             feature_key,
@@ -104,6 +144,47 @@ router.post(
 );
 
 // Leer una feature por ID
+/**
+ * @swagger
+ * /features/{id}:
+ *   get:
+ *     summary: Obtener una feature por ID
+ *     tags: [Features]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID de la feature
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Feature encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   description: ID de la feature
+ *                 project_id:
+ *                   type: string
+ *                   description: ID del proyecto
+ *                 feature_key:
+ *                   type: string
+ *                   description: Clave de la feature
+ *                 description:
+ *                   type: string
+ *                   description: Descripción de la feature
+ *                 state:
+ *                   type: string
+ *                   description: Estado de la feature
+ *       404:
+ *         description: Feature no encontrada
+ *       500:
+ *         description: Error al obtener la feature
+ */
 router.get("/:id", (req, res) => {
   const featureId = req.params.id;
 
@@ -121,6 +202,48 @@ router.get("/:id", (req, res) => {
 });
 
 // Actualizar una feature (permitir a todos los usuarios autenticados)
+/**
+ * @swagger
+ * /features/{id}:
+ *   put:
+ *     summary: Actualizar una feature
+ *     tags: [Features]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID de la feature
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               description:
+ *                 type: string
+ *                 description: Nueva descripción de la feature
+ *               state:
+ *                 type: string
+ *                 enum: [on, off]
+ *                 description: Nuevo estado de la feature
+ *               conditions:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Nuevas condiciones de la feature
+ *     responses:
+ *       200:
+ *         description: Feature actualizada exitosamente
+ *       404:
+ *         description: Feature no encontrada
+ *       500:
+ *         description: Error al actualizar la feature
+ */
 router.put(
   "/:id",
   auth,
@@ -202,6 +325,31 @@ router.put(
 );
 
 // Eliminar una feature (permitir a cualquier usuario autenticado)
+/**
+ * @swagger
+ * /features/{id}:
+ *   delete:
+ *     summary: Eliminar una feature
+ *     tags: [Features]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID de la feature a eliminar
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Feature eliminada exitosamente
+ *       403:
+ *         description: No tienes acceso a este feature
+ *       404:
+ *         description: Feature no encontrada
+ *       500:
+ *         description: Error al eliminar la feature
+ */
 router.delete("/:id", auth, (req, res) => {
   const featureId = req.params.id;
 

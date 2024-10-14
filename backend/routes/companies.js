@@ -33,6 +33,47 @@ const upload = multer({
 });
 
 // Ruta para registrar una nueva empresa (solo administradores)
+/**
+ * @swagger
+ * /companies/new:
+ *   post:
+ *     summary: Crear una nueva empresa
+ *     tags: [Companies]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               logo:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: Empresa creada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 companyId:
+ *                   type: integer
+ *                 logoUrl:
+ *                   type: string
+ *       400:
+ *         description: Error de validación
+ *       500:
+ *         description: Error al crear la empresa
+ */
 router.post(
   "/new",
   auth,
@@ -70,6 +111,52 @@ router.post(
 );
 
 // Ruta para crear usuarios asociados a una empresa existente (solo administradores)
+/**
+ * @swagger
+ * /companies/{id}/users:
+ *   post:
+ *     summary: Crear un nuevo usuario asociado a una empresa
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de la empresa
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [admin, user]
+ *     responses:
+ *       201:
+ *         description: Usuario creado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 userId:
+ *                   type: integer
+ *       400:
+ *         description: Error de validación
+ *       500:
+ *         description: Error al crear el usuario
+ */
 router.post(
   "/:id/users",
   auth,
@@ -136,6 +223,35 @@ router.post(
 );
 
 // Leer todas las empresas (protegida, solo administradores)
+/**
+ * @swagger
+ * /companies:
+ *   get:
+ *     summary: Obtener todas las empresas
+ *     tags: [Companies]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de empresas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   name:
+ *                     type: string
+ *                   address:
+ *                     type: string
+ *                   logo_url:
+ *                     type: string
+ *       500:
+ *         description: Error al obtener las empresas
+ */
 router.get("/", auth, authorize("admin"), (req, res) => {
   const query = "SELECT * FROM companies";
   connection.query(query, (err, results) => {
@@ -150,9 +266,44 @@ router.get("/", auth, authorize("admin"), (req, res) => {
 });
 
 // Leer una empresa por ID (protegida, solo administradores)
-router.get("/:id", auth, (req, res) => {
+/**
+ * @swagger
+ * /companies/{id}:
+ *   get:
+ *     summary: Obtener una empresa por ID
+ *     tags: [Companies]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de la empresa
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Empresa encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 address:
+ *                   type: string
+ *                 logo_url:
+ *                   type: string
+ *       404:
+ *         description: Empresa no encontrada
+ *       500:
+ *         description: Error al obtener la empresa
+ */
+router.get("/:id", auth, authorize("admin"), (req, res) => {
   const companyId = req.params.id;
-
   const query = "SELECT * FROM companies WHERE id = ?";
   connection.query(query, [companyId], (err, results) => {
     if (err) {
@@ -166,7 +317,48 @@ router.get("/:id", auth, (req, res) => {
   });
 });
 
-// Actualizar una empresa (protegida, solo administradores)
+// Ruta para actualizar una empresa (protegida, solo administradores)
+/**
+ * @swagger
+ * /companies/{id}:
+ *   put:
+ *     summary: Actualiza una empresa
+ *     tags: [Companies]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID de la empresa a actualizar
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Nuevo nombre de la empresa
+ *               address:
+ *                 type: string
+ *                 description: Nueva dirección de la empresa
+ *               logo_url:
+ *                 type: string
+ *                 description: Nueva URL del logo de la empresa
+ *     responses:
+ *       200:
+ *         description: Empresa actualizada exitosamente
+ *       400:
+ *         description: Errores de validación
+ *       403:
+ *         description: Acceso denegado (solo administradores)
+ *       404:
+ *         description: Empresa no encontrada
+ *       500:
+ *         description: Error al actualizar la empresa
+ */
 router.put(
   "/:id",
   auth,
@@ -210,10 +402,32 @@ router.put(
   }
 );
 
-// Eliminar una empresa (protegida, solo administradores)
+// Eliminar una empresa (solo administradores)
+/**
+ * @swagger
+ * /companies/{id}:
+ *   delete:
+ *     summary: Eliminar una empresa por ID
+ *     tags: [Companies]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de la empresa
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Empresa eliminada exitosamente
+ *       404:
+ *         description: Empresa no encontrada
+ *       500:
+ *         description: Error al eliminar la empresa
+ */
 router.delete("/:id", auth, authorize("admin"), (req, res) => {
   const companyId = req.params.id;
-
   const query = "DELETE FROM companies WHERE id = ?";
   connection.query(query, [companyId], (err, results) => {
     if (err) {
@@ -223,7 +437,7 @@ router.delete("/:id", auth, authorize("admin"), (req, res) => {
     if (results.affectedRows === 0) {
       return res.status(404).json({ message: "Empresa no encontrada." });
     }
-    res.json({ message: "Empresa eliminada exitosamente" });
+    res.json({ message: "Empresa eliminada exitosamente." });
   });
 });
 
