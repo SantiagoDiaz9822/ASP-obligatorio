@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const bcrypt = require("bcrypt"); // Para hashear las contraseñas
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken"); // Para manejar JWT
 const { body, validationResult } = require("express-validator"); // Para validación
 const connection = require("../db"); // Conexión a la base de datos
