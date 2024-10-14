@@ -1,4 +1,3 @@
-// src/views/Companies.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
@@ -69,7 +68,7 @@ const Companies = () => {
         setCompanies(response.data);
       } catch (error) {
         console.error("Error fetching companies:", error);
-        setError("Error al cargar las empresas."); // Guardar mensaje de error
+        setError("Error al cargar las empresas."); 
       }
     };
 

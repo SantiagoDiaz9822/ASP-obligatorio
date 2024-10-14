@@ -1,4 +1,3 @@
-// src/views/ChangeHistory.js
 import React, { useEffect, useState } from "react";
 import {
   Container,
@@ -59,7 +58,7 @@ const ChangeHistory = () => {
     setEndDate("");
     setFeatureKey("");
     setUserId("");
-    fetchChanges(); // Opcional: refetch all changes without filters
+    fetchChanges(); 
   };
 
   return (
@@ -136,7 +135,6 @@ const ChangeHistory = () => {
                 <TableCell>{change.feature_id}</TableCell>
                 <TableCell>{change.user_id}</TableCell>
                 <TableCell>{change.action}</TableCell>
-                {/* Convertir el campo changed_fields a texto legible */}
                 <TableCell>{JSON.stringify(change.changed_fields)}</TableCell>
                 <TableCell>
                   {new Date(change.created_at).toLocaleString()}

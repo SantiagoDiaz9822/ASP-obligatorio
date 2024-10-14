@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const connection = require("../db"); // Conexión a la base de datos
-const auth = require("../middleware/auth"); // Middleware de autenticación
-const { body, validationResult } = require("express-validator"); // Para validaciones
+const connection = require("../db");
+const auth = require("../middleware/auth");
+const { body, validationResult } = require("express-validator");
 
-// Función para generar un API Key (implementación simple)
+// Función para generar un API Key
 const generateApiKey = () => {
-  return require("crypto").randomBytes(20).toString("hex"); // Genera una cadena aleatoria
+  return require("crypto").randomBytes(20).toString("hex");
 };
 
 // Rutas protegidas (usa el middleware de autenticación)
@@ -26,9 +26,8 @@ router.post(
     }
 
     const { name, description } = req.body;
-    const userId = req.userId; // Obtenemos el ID del usuario autenticado
+    const userId = req.userId;
 
-    // Consulta para obtener el company_id del usuario autenticado
     const queryUser = "SELECT company_id FROM users WHERE id = ?";
     connection.query(queryUser, [userId], (err, userResults) => {
       if (err) {
@@ -44,7 +43,6 @@ router.post(
 
       const companyId = userResults[0].company_id;
 
-      // Insertar el proyecto usando el company_id
       const query =
         "INSERT INTO projects (name, description, company_id) VALUES (?, ?, ?)";
       connection.query(
@@ -58,10 +56,8 @@ router.post(
               .json({ message: "Error al crear el proyecto." });
           }
 
-          // Generar un token de autenticación (API Key)
           const apiKey = generateApiKey();
 
-          // Actualizar el proyecto con el API Key
           const updateQuery = "UPDATE projects SET api_key = ? WHERE id = ?";
           connection.query(updateQuery, [apiKey, results.insertId], (err) => {
             if (err) {
@@ -85,9 +81,8 @@ router.post(
 
 // Leer todos los proyectos del usuario
 router.get("/", (req, res) => {
-  const userId = req.userId; // Obtén el ID del usuario autenticado
+  const userId = req.userId; 
 
-  // Obtener el ID de la empresa del usuario
   const queryUser = "SELECT company_id FROM users WHERE id = ?";
   connection.query(queryUser, [userId], (err, userResults) => {
     if (err) {
@@ -100,7 +95,6 @@ router.get("/", (req, res) => {
     }
     const companyId = userResults[0].company_id;
 
-    // Consultar proyectos filtrando por el ID de la empresa
     const query = "SELECT * FROM projects WHERE company_id = ?";
     connection.query(query, [companyId], (err, results) => {
       if (err) {
@@ -110,7 +104,6 @@ router.get("/", (req, res) => {
           .json({ message: "Error al obtener los proyectos." });
       }
 
-      // Si no hay proyectos, devuelve una lista vacía
       if (results.length === 0) {
         return res.status(200).json([]);
       }
@@ -141,7 +134,6 @@ router.get("/:id", (req, res) => {
 router.get("/:id/features", (req, res) => {
   const projectId = req.params.id;
 
-  // Verificar que el proyecto pertenece a la empresa del usuario
   const projectQuery = `SELECT company_id FROM projects WHERE id = ?`;
   connection.query(projectQuery, [projectId], (err, results) => {
     if (err) {
@@ -157,7 +149,6 @@ router.get("/:id/features", (req, res) => {
         .json({ message: "No tienes acceso a este proyecto." });
     }
 
-    // Si el proyecto pertenece a la empresa del usuario, obtenemos las features
     const query = "SELECT * FROM features WHERE project_id = ?";
     connection.query(query, [projectId], (err, features) => {
       if (err) {
@@ -175,7 +166,6 @@ router.get("/:id/features", (req, res) => {
 router.delete("/:id", (req, res) => {
   const projectId = req.params.id;
 
-  // Primero, verificar si el proyecto tiene features asociadas
   const checkFeaturesQuery =
     "SELECT COUNT(*) AS count FROM features WHERE project_id = ?";
   connection.query(checkFeaturesQuery, [projectId], (err, results) => {

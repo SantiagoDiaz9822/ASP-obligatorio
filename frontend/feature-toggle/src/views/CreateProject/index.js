@@ -1,14 +1,13 @@
-// src/views/CreateProject.js
 import React, { useState } from "react";
 import axios from "axios";
-import { Container, Typography, TextField, Button } from "@mui/material"; // Importa componentes de MUI
-import { toast } from "react-toastify"; // Importa toast
+import { Container, Typography, TextField, Button } from "@mui/material"; 
+import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
 const CreateProject = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const navigate = useNavigate(); // Hook para redirigir
+  const navigate = useNavigate(); 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +30,7 @@ const CreateProject = () => {
         position: "bottom-right",
         autoClose: 5000,
       });
-      navigate("/projects"); // Redirigir a la lista de proyectos
+      navigate("/projects");
     } catch (error) {
       console.error("Error creating project:", error);
       toast.error("Error al crear el proyecto.", {

@@ -21,7 +21,7 @@ const Layout = () => {
   return (
     <>
       <NavBar />
-      <Outlet /> {/* Aquí se renderizarán las rutas anidadas */}
+      <Outlet /> 
     </>
   );
 };
@@ -30,6 +30,7 @@ const RouterPage = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      
       <Route element={<Layout />}>
         <Route
           path="/companies"
@@ -75,7 +76,6 @@ const RouterPage = () => {
         <Route path="/usage-log" element={<UsageLog />} />
       </Route>
 
-      {/* Esta ruta no tiene NavBar */}
       <Route path="/reset-password" element={<ResetPassword />} />
     </Routes>
   );

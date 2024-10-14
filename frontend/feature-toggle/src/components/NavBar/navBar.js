@@ -35,6 +35,7 @@ const NavBar = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userRole");
+    localStorage.removeItem("companyId");
     navigate("/login");
     setAnchorEl(null);
   };

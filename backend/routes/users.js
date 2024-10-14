@@ -1,16 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken"); // Para manejar JWT
-const { body, validationResult } = require("express-validator"); // Para validación
-const connection = require("../db"); // Conexión a la base de datos
-const transporter = require("../mailer"); // Importa el transportador
-require("dotenv").config(); // Cargar variables de entorno
+const jwt = require("jsonwebtoken"); 
+const { body, validationResult } = require("express-validator"); 
+const connection = require("../db"); 
+const transporter = require("../mailer"); 
+require("dotenv").config(); 
+const JWT_SECRET = process.env.JWT_SECRET;
+const auth = require("../middleware/auth");
+const authorize = require("../middleware/authorize"); 
 
-const JWT_SECRET = process.env.JWT_SECRET; // Cargar el secreto desde .env
-const auth = require("../middleware/auth"); // Middleware de autenticación
-const authorize = require("../middleware/authorize"); // Middleware de autorización
-
+// Ruta para registrar un usuario (protegido, solo administradores)
 router.post(
   "/register",
   auth,
@@ -35,7 +35,6 @@ router.post(
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Inicializar first_login en false
       const query =
         "INSERT INTO users (email, password_hash, role, first_login) VALUES (?, ?, ?, false)";
       connection.query(query, [email, hashedPassword, role], (err, results) => {
@@ -46,16 +45,14 @@ router.post(
             .json({ message: "Error al crear el usuario." });
         }
 
-        // Generar un token para el primer inicio de sesión
         const token = jwt.sign(
-          { email }, // Solo pasamos el email
+          { email },
           process.env.JWT_SECRET,
           {
-            expiresIn: "1h", // El token expirará en 1 hora
+            expiresIn: "1h",
           }
         );
 
-        // Enviar correo electrónico de bienvenida
         const mailOptions = {
           from: process.env.EMAIL_USER,
           to: email,
@@ -85,7 +82,7 @@ router.post(
   }
 );
 
-// Nueva ruta para asignar un usuario a una empresa
+// Ruta para asignar un usuario a una empresa
 router.post(
   "/assign-to-company",
   auth,
@@ -148,21 +145,17 @@ router.post(
 
       const user = results[0];
 
-      // Verificar la contraseña
       const match = await bcrypt.compare(password, user.password_hash);
       if (!match) {
         return res.status(401).json({ message: "Credenciales incorrectas." });
       }
 
-      // Verificar si el usuario ha restablecido su contraseña
       if (!user.first_login) {
-        // Cambiado de `if (user.first_login)`
         return res.status(403).json({
           message: "Debes restablecer tu contraseña antes de iniciar sesión.",
         });
       }
 
-      // Generar un token JWT
       const token = jwt.sign(
         { id: user.id, role: user.role, company_id: user.company_id },
         JWT_SECRET,
@@ -199,16 +192,13 @@ router.post(
 
     const { token, new_password } = req.body;
 
-    // Verificar el token
     jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
       if (err) {
         return res.status(401).json({ message: "Token inválido o expirado." });
       }
 
-      // Extraer información del token
       const { email } = decoded;
 
-      // Actualizar la contraseña y marcar que el usuario ya realizó el primer login
       const hashedPassword = await bcrypt.hash(new_password, 10);
       const updateQuery =
         "UPDATE users SET password_hash = ?, first_login = true WHERE email = ?";

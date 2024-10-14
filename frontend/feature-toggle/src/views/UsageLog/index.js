@@ -49,7 +49,6 @@ const UsageReport = () => {
         Reporte de Uso
       </Typography>
 
-      {/* Campo para seleccionar la fecha y hora de inicio */}
       <TextField
         label="Fecha y Hora de Inicio"
         type="datetime-local"
@@ -62,7 +61,6 @@ const UsageReport = () => {
         margin="normal"
       />
 
-      {/* Campo para seleccionar la fecha y hora de fin */}
       <TextField
         label="Fecha y Hora de Fin"
         type="datetime-local"

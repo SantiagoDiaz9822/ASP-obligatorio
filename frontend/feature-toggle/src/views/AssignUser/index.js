@@ -1,4 +1,3 @@
-// src/views/AssignUser.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
@@ -10,15 +9,15 @@ import {
   Select,
   MenuItem,
   Button,
-} from "@mui/material"; // Importa componentes de MUI
-import { toast } from "react-toastify"; // Importa toast
+} from "@mui/material"; 
+import { toast } from "react-toastify"; 
 import { useNavigate } from "react-router-dom";
 
 const AssignUser = () => {
   const { companyId } = useParams();
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState("");
-  const navigate = useNavigate(); // Hook para redirigir
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -55,7 +54,6 @@ const AssignUser = () => {
           },
         }
       );
-      // Mostrar el mensaje de éxito
       toast.success("Usuario asignado a la empresa exitosamente!", {
         position: "bottom-right",
         autoClose: 5000,
@@ -67,7 +65,6 @@ const AssignUser = () => {
       navigate("/companies");
     } catch (error) {
       console.error("Error assigning user to company:", error);
-      // Mostrar el mensaje de error
       toast.error("Error al asignar el usuario a la empresa.", {
         position: "bottom-right",
         autoClose: 5000,

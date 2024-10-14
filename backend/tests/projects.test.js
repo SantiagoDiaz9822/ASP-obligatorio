@@ -35,14 +35,14 @@ describe("Projects API", () => {
         {
           location: "body",
           msg: "El nombre del proyecto es requerido.",
-          path: "name", // Cambiado de "param" a "path"
-          type: "field", // Agregado para que coincida con la nueva estructura
+          path: "name", 
+          type: "field", 
         },
         {
           location: "body",
           msg: "La descripción es requerida.",
-          path: "description", // Cambiado de "param" a "path"
-          type: "field", // Agregado para que coincida con la nueva estructura
+          path: "description", 
+          type: "field", 
         },
       ]);
     });
@@ -92,7 +92,7 @@ describe("Projects API", () => {
     it("debería devolver un error 500 si hay un problema al obtener la empresa del usuario", async () => {
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT company_id FROM users WHERE id = ?")) {
-          callback(new Error("Error al obtener la empresa del usuario")); // Simula un error al obtener la empresa
+          callback(new Error("Error al obtener la empresa del usuario")); 
         }
       });
 
@@ -110,7 +110,7 @@ describe("Projects API", () => {
     it("debería devolver un error 404 si el usuario no es encontrado", async () => {
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT company_id FROM users WHERE id = ?")) {
-          callback(null, []); // Simula que no se encontró ningún usuario
+          callback(null, []); 
         }
       });
 
@@ -132,7 +132,7 @@ describe("Projects API", () => {
         } else if (query.includes("INSERT INTO projects")) {
           callback(null, { insertId: 1 });
         } else if (query.includes("UPDATE projects SET api_key =")) {
-          callback(new Error("Error al asignar el API Key")); // Simula un error al asignar el API Key
+          callback(new Error("Error al asignar el API Key")); 
         }
       });
 
@@ -150,7 +150,6 @@ describe("Projects API", () => {
 
   describe("GET /projects", () => {
     it("debería devolver un error 500 si hay un problema al obtener la empresa del usuario", async () => {
-      // Simula un error en la consulta de la empresa del usuario
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT company_id FROM users")) {
           callback(new Error("Error al obtener la empresa del usuario"));
@@ -165,7 +164,6 @@ describe("Projects API", () => {
     });
 
     it("debería devolver un error 500 si hay un problema con la base de datos al obtener los proyectos", async () => {
-      // Simula la consulta de la empresa correctamente, pero falla la consulta de proyectos
       const mockUserResults = [{ company_id: 1 }];
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT company_id FROM users")) {
@@ -183,7 +181,6 @@ describe("Projects API", () => {
     });
 
     it("debería manejar el caso en el que no hay proyectos disponibles", async () => {
-      // Simula que no hay proyectos disponibles para la empresa
       const mockUserResults = [{ company_id: 1 }];
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT company_id FROM users")) {
@@ -195,11 +192,10 @@ describe("Projects API", () => {
 
       const response = await request(app).get("/projects");
       expect(response.status).toBe(200);
-      expect(response.body).toEqual([]); // Lista vacía si no hay proyectos
+      expect(response.body).toEqual([]); 
     });
 
     it("debería devolver una lista de proyectos exitosamente", async () => {
-      // Simula una respuesta exitosa con una lista de proyectos
       const mockUserResults = [{ company_id: 1 }];
       const mockProjects = [
         { id: 1, name: "Project A", description: "Description A" },
@@ -222,7 +218,7 @@ describe("Projects API", () => {
     it("debería devolver un error 404 si el usuario no es encontrado al obtener los proyectos", async () => {
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT company_id FROM users WHERE id = ?")) {
-          callback(null, []); // Simula que no se encontró ningún usuario
+          callback(null, []);
         }
       });
 
@@ -243,7 +239,6 @@ describe("Projects API", () => {
         description: "Description A",
       };
 
-      // Simula que el proyecto con el ID existe
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT * FROM projects WHERE id = ?")) {
           callback(null, [mockProject]);
@@ -256,10 +251,9 @@ describe("Projects API", () => {
     });
 
     it("debería devolver un 404 si el proyecto no existe", async () => {
-      // Simula que no existe un proyecto con el ID proporcionado
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT * FROM projects WHERE id = ?")) {
-          callback(null, []); // No hay resultados
+          callback(null, []); 
         }
       });
 
@@ -269,7 +263,6 @@ describe("Projects API", () => {
     });
 
     it("debería devolver un error 500 si hay un problema con la base de datos", async () => {
-      // Simula un error en la consulta de la base de datos
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT * FROM projects WHERE id = ?")) {
           callback(new Error("Error al obtener el proyecto"));
@@ -301,14 +294,13 @@ describe("Projects API", () => {
         },
       ];
 
-      // Simula que el proyecto pertenece a la empresa
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT company_id FROM projects WHERE id = ?")) {
-          callback(null, [{ company_id: 1 }]); // El proyecto existe y pertenece a la empresa
+          callback(null, [{ company_id: 1 }]);
         } else if (
           query.includes("SELECT * FROM features WHERE project_id = ?")
         ) {
-          callback(null, mockFeatures); // Devuelve las features del proyecto
+          callback(null, mockFeatures); 
         }
       });
 
@@ -318,10 +310,9 @@ describe("Projects API", () => {
     });
 
     it("debería devolver un 403 si el usuario no tiene acceso al proyecto", async () => {
-      // Simula que el proyecto no pertenece a la empresa del usuario
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT company_id FROM projects WHERE id = ?")) {
-          callback(null, []); // El proyecto no pertenece a la empresa
+          callback(null, []);
         }
       });
 
@@ -333,7 +324,6 @@ describe("Projects API", () => {
     });
 
     it("debería devolver un error 500 si hay un problema al verificar el proyecto", async () => {
-      // Simula un error en la verificación del proyecto
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT company_id FROM projects WHERE id = ?")) {
           callback(new Error("Error al verificar el proyecto"));
@@ -348,14 +338,13 @@ describe("Projects API", () => {
     });
 
     it("debería devolver un error 500 si hay un problema al obtener las features", async () => {
-      // Simula que el proyecto pertenece a la empresa
       connection.query.mockImplementation((query, params, callback) => {
         if (query.includes("SELECT company_id FROM projects WHERE id = ?")) {
-          callback(null, [{ company_id: 1 }]); // El proyecto pertenece a la empresa
+          callback(null, [{ company_id: 1 }]); 
         } else if (
           query.includes("SELECT * FROM features WHERE project_id = ?")
         ) {
-          callback(new Error("Error al obtener las features")); // Error al obtener las features
+          callback(new Error("Error al obtener las features")); 
         }
       });
 
@@ -369,16 +358,15 @@ describe("Projects API", () => {
 
   describe("DELETE /projects/:id", () => {
     it("debería eliminar el proyecto si no tiene features", async () => {
-      // Simula que el proyecto no tiene features
       connection.query.mockImplementation((query, params, callback) => {
         if (
           query.includes(
             "SELECT COUNT(*) AS count FROM features WHERE project_id = ?"
           )
         ) {
-          callback(null, [{ count: 0 }]); // No hay features asociadas
+          callback(null, [{ count: 0 }]); 
         } else if (query.includes("DELETE FROM projects WHERE id = ?")) {
-          callback(null, { affectedRows: 1 }); // El proyecto se eliminó exitosamente
+          callback(null, { affectedRows: 1 }); 
         }
       });
 
@@ -390,14 +378,13 @@ describe("Projects API", () => {
     });
 
     it("debería devolver un error 400 si el proyecto tiene features asociadas", async () => {
-      // Simula que el proyecto tiene features asociadas
       connection.query.mockImplementation((query, params, callback) => {
         if (
           query.includes(
             "SELECT COUNT(*) AS count FROM features WHERE project_id = ?"
           )
         ) {
-          callback(null, [{ count: 5 }]); // El proyecto tiene 5 features asociadas
+          callback(null, [{ count: 5 }]); 
         }
       });
 
@@ -410,16 +397,15 @@ describe("Projects API", () => {
     });
 
     it("debería devolver un error 404 si el proyecto no existe", async () => {
-      // Simula que el proyecto no se encuentra
       connection.query.mockImplementation((query, params, callback) => {
         if (
           query.includes(
             "SELECT COUNT(*) AS count FROM features WHERE project_id = ?"
           )
         ) {
-          callback(null, [{ count: 0 }]); // No hay features asociadas
+          callback(null, [{ count: 0 }]);
         } else if (query.includes("DELETE FROM projects WHERE id = ?")) {
-          callback(null, { affectedRows: 0 }); // El proyecto no existe
+          callback(null, { affectedRows: 0 }); 
         }
       });
 
@@ -429,7 +415,6 @@ describe("Projects API", () => {
     });
 
     it("debería devolver un error 500 si hay un problema al verificar las features", async () => {
-      // Simula un error en la verificación de las features
       connection.query.mockImplementation((query, params, callback) => {
         if (
           query.includes(
@@ -448,14 +433,13 @@ describe("Projects API", () => {
     });
 
     it("debería devolver un error 500 si hay un problema al eliminar el proyecto", async () => {
-      // Simula que el proyecto no tiene features, pero ocurre un error al eliminar
       connection.query.mockImplementation((query, params, callback) => {
         if (
           query.includes(
             "SELECT COUNT(*) AS count FROM features WHERE project_id = ?"
           )
         ) {
-          callback(null, [{ count: 0 }]); // No hay features asociadas
+          callback(null, [{ count: 0 }]);
         } else if (query.includes("DELETE FROM projects WHERE id = ?")) {
           callback(new Error("Error al eliminar el proyecto"));
         }

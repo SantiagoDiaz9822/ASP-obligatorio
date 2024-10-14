@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
-require("dotenv").config(); // Asegúrate de cargar las variables de entorno
-
-const JWT_SECRET = process.env.JWT_SECRET; // Cargar el secreto desde .env
+require("dotenv").config();
+const JWT_SECRET = process.env.JWT_SECRET; 
 
 // Middleware para proteger rutas
 const auth = (req, res, next) => {
@@ -16,7 +15,7 @@ const auth = (req, res, next) => {
       return res.status(401).json({ message: "Token inválido." });
     }
     req.userId = decoded.id;
-    req.userRole = decoded.role; // Almacena el rol del usuario
+    req.userRole = decoded.role;
     next();
   });
 };

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const connection = require("../db"); // Conexión a la base de datos
-const auth = require("../middleware/auth"); // Middleware de autenticación
+const connection = require("../db"); 
+const auth = require("../middleware/auth"); 
 
 // Rutas protegidas (usa el middleware)
 router.use(auth);
