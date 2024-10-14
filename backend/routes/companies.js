@@ -7,7 +7,7 @@ const connection = require("../db");
 const auth = require("../middleware/auth");
 const authorize = require("../middleware/authorize");
 const { body, validationResult } = require("express-validator");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const transporter = require("../mailer"); // Asegúrate de que tu transportador esté configurado
 
 // Configura AWS S3
