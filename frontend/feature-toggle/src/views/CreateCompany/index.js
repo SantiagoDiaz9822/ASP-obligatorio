@@ -1,4 +1,3 @@
-// src/views/CreateCompany.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -8,17 +7,17 @@ import { toast } from "react-toastify";
 const CreateCompany = () => {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
-  const [logo, setLogo] = useState(null); // Cambiar a estado para el archivo
+  const [logo, setLogo] = useState(null); 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
 
-    const formData = new FormData(); // Crear un objeto FormData para manejar la carga de archivos
+    const formData = new FormData(); 
     formData.append("name", name);
     formData.append("address", address);
-    formData.append("logo", logo); // Agregar el archivo de logo
+    formData.append("logo", logo); 
 
     try {
       await axios.post(
@@ -27,11 +26,10 @@ const CreateCompany = () => {
         {
           headers: {
             Authorization: `${token}`,
-            "Content-Type": "multipart/form-data", // Especificar el tipo de contenido
+            "Content-Type": "multipart/form-data", 
           },
         }
       );
-      // Mostrar el mensaje de éxito
       toast.success("Empresa creada exitosamente!", {
         position: "bottom-right",
         autoClose: 5000,
@@ -40,11 +38,9 @@ const CreateCompany = () => {
         pauseOnHover: true,
         draggable: true,
       });
-      // Redirigir a la página de empresas
       navigate("/companies");
     } catch (error) {
       console.error("Error creando la empresa:", error);
-      // Mostrar el mensaje de error
       toast.error("Error al crear la empresa.", {
         position: "bottom-right",
         autoClose: 5000,
@@ -82,9 +78,9 @@ const CreateCompany = () => {
             required
           />
           <input
-            type="file" // Cambiar a input de tipo archivo
-            accept="image/*" // Aceptar solo imágenes
-            onChange={(e) => setLogo(e.target.files[0])} // Guardar el archivo seleccionado
+            type="file" 
+            accept="image/*" 
+            onChange={(e) => setLogo(e.target.files[0])} 
             required
           />
           <Button

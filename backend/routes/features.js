@@ -1,10 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const connection = require("../db"); // Conexión a la base de datos
-const auth = require("../middleware/auth"); // Importa el middleware de autenticación
-const authorize = require("../middleware/authorize"); // Importa el middleware de autorización
-const { body, validationResult } = require("express-validator"); // Para validaciones
-const changeHistoryRouter = require("./changeHistory"); // Ruta de cambios
+const connection = require("../db");
+const auth = require("../middleware/auth");
+const { body, validationResult } = require("express-validator"); 
+const changeHistoryRouter = require("./changeHistory"); 
 
 // Rutas protegidas (usa el middleware de autenticación)
 router.use(auth);
@@ -16,7 +15,7 @@ router.post(
     body("project_id").notEmpty().withMessage("El project_id es requerido."),
     body("feature_key")
       .notEmpty()
-      .matches(/^[a-zA-Z0-9_]+$/) // Validar que sea alfanumérica sin espacios
+      .matches(/^[a-zA-Z0-9_]+$/) // Solo alfanumérico y guión bajo
       .withMessage(
         "La key debe ser alfanumérica y no puede contener espacios."
       ),
@@ -39,7 +38,6 @@ router.post(
     const { project_id, feature_key, description, conditions, state } =
       req.body;
 
-    // Verificar que el proyecto pertenezca a la empresa del usuario
     const projectQuery = "SELECT company_id FROM projects WHERE id = ?";
     connection.query(projectQuery, [project_id], (err, projectResults) => {
       if (err) {
@@ -55,7 +53,6 @@ router.post(
           .json({ message: "No tienes acceso a este proyecto." });
       }
 
-      // Si el proyecto pertenece a la empresa del usuario, continuamos con la creación
       const conditionsString = conditions ? JSON.stringify(conditions) : null;
 
       const query =
@@ -71,8 +68,7 @@ router.post(
               .json({ message: "Error al crear el feature." });
           }
 
-          // Registrar el cambio
-          const action = "create"; // Acción realizada
+          const action = "create"; 
           const changed_fields = {
             project_id,
             feature_key,
@@ -127,7 +123,7 @@ router.get("/:id", (req, res) => {
 // Actualizar una feature (permitir a todos los usuarios autenticados)
 router.put(
   "/:id",
-  auth, // Permitir a cualquier usuario autenticado
+  auth,
   [
     body("description")
       .optional()
@@ -146,7 +142,6 @@ router.put(
     const featureId = req.params.id;
     const { description, conditions, state } = req.body;
 
-    // Verificar que el feature pertenece a un proyecto de la empresa del usuario
     const featureQuery = `
       SELECT f.id, p.company_id 
       FROM features f 
@@ -167,7 +162,6 @@ router.put(
           .json({ message: "No tienes acceso a este feature." });
       }
 
-      // Si el feature pertenece a la empresa del usuario, permitimos la edición
       const conditionsString = conditions ? JSON.stringify(conditions) : null;
 
       const query =
@@ -186,8 +180,7 @@ router.put(
             return res.status(404).json({ message: "Feature no encontrada." });
           }
 
-          // Registrar el cambio
-          const action = "update"; // Acción realizada
+          const action = "update";
           const changed_fields = { description, conditions, state };
           const changeQuery =
             "INSERT INTO change_history (feature_id, user_id, action, changed_fields) VALUES (?, ?, ?, ?)";
@@ -212,7 +205,6 @@ router.put(
 router.delete("/:id", auth, (req, res) => {
   const featureId = req.params.id;
 
-  // Verificar que el feature pertenece a un proyecto de la empresa del usuario
   const featureQuery = `
     SELECT f.id, p.company_id 
     FROM features f 
@@ -246,8 +238,7 @@ router.delete("/:id", auth, (req, res) => {
         return res.status(404).json({ message: "Feature no encontrada." });
       }
 
-      // Registrar el cambio
-      const action = "delete"; // Acción realizada
+      const action = "delete";
       const changed_fields = { featureId };
       const changeQuery =
         "INSERT INTO change_history (feature_id, user_id, action, changed_fields) VALUES (?, ?, ?, ?)";

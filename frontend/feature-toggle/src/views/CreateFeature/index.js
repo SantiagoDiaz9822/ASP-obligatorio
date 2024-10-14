@@ -1,4 +1,3 @@
-// src/views/CreateFeature.js
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -6,7 +5,7 @@ import { Container, Typography, TextField, Button, Grid } from "@mui/material";
 import { toast } from "react-toastify";
 
 const CreateFeature = () => {
-  const { projectId } = useParams(); // Obtener el ID del proyecto
+  const { projectId } = useParams();
   const [featureKey, setFeatureKey] = useState("");
   const [description, setDescription] = useState("");
   const [state, setState] = useState("off");
@@ -78,7 +77,6 @@ const CreateFeature = () => {
           margin="normal"
         />
 
-        {/* Cambiamos el input de texto por un select para el estado */}
         <TextField
           label="Estado"
           fullWidth

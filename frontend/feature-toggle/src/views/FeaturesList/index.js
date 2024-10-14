@@ -1,4 +1,3 @@
-// src/views/FeaturesList.js
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
@@ -17,7 +16,7 @@ import {
 import { toast } from "react-toastify";
 
 const FeaturesList = () => {
-  const { projectId } = useParams(); // Obtener el ID del proyecto desde la URL
+  const { projectId } = useParams(); 
   const [features, setFeatures] = useState([]);
 
   useEffect(() => {

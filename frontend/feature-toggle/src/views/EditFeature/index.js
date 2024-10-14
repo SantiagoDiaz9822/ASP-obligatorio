@@ -1,4 +1,3 @@
-// src/views/EditFeature.js
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -6,7 +5,7 @@ import { Container, Typography, TextField, Button, Grid } from "@mui/material";
 import { toast } from "react-toastify";
 
 const EditFeature = () => {
-  const { featureId, projectId } = useParams(); // Obtener IDs
+  const { featureId, projectId } = useParams(); 
   const [featureKey, setFeatureKey] = useState("");
   const [description, setDescription] = useState("");
   const [state, setState] = useState("off");
@@ -90,7 +89,7 @@ const EditFeature = () => {
           onChange={(e) => setFeatureKey(e.target.value)}
           required
           margin="normal"
-          disabled // La key no puede ser editada
+          disabled 
         />
         <TextField
           label="Descripción"

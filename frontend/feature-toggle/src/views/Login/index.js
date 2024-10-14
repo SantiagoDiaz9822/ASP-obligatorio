@@ -1,4 +1,3 @@
-// src/views/Login/index.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -33,11 +32,10 @@ const Login = () => {
         }
       );
 
-      // Almacena el token y el email en el localStorage
       localStorage.setItem("token", response.data.token);
-      localStorage.setItem("userEmail", username.split("@")[0]); // Almacena la parte antes del '@'
-      localStorage.setItem("userRole", response.data.role); // Almacena el rol del usuario
-      localStorage.setItem("companyId", response.data.company_id); // Almacena el ID de la empresa
+      localStorage.setItem("userEmail", username.split("@")[0]); 
+      localStorage.setItem("userRole", response.data.role); 
+      localStorage.setItem("companyId", response.data.company_id); 
 
       toast.success("Inicio de sesión exitoso", {
         position: "bottom-right",
@@ -49,7 +47,7 @@ const Login = () => {
         progress: undefined,
       });
 
-      navigate("/companies"); // Redirigir al usuario a la página principal
+      navigate("/companies"); 
     } catch (error) {
       let errorMessage = error.response
         ? error.response.data.message

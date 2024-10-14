@@ -1,4 +1,3 @@
-// src/views/AdminPanel.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
@@ -19,14 +18,14 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-} from "@mui/material"; // Importa componentes de MUI
-import { toast } from "react-toastify"; // Importa toast
+} from "@mui/material"; 
+import { toast } from "react-toastify"; 
 
 const AdminPanel = () => {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
-  const [openDialog, setOpenDialog] = useState(false); // Estado para el diálogo de confirmación
-  const [userIdToDelete, setUserIdToDelete] = useState(null); // ID del usuario a eliminar
+  const [openDialog, setOpenDialog] = useState(false); 
+  const [userIdToDelete, setUserIdToDelete] = useState(null); 
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -43,7 +42,7 @@ const AdminPanel = () => {
         setUsers(response.data);
       } catch (error) {
         console.error("Error fetching users:", error);
-        setError("Error al cargar los usuarios."); // Guardar mensaje de error
+        setError("Error al cargar los usuarios."); 
       }
     };
 
@@ -55,13 +54,13 @@ const AdminPanel = () => {
   };
 
   const handleOpenDialog = (userId) => {
-    setUserIdToDelete(userId); // Establecer el ID del usuario a eliminar
-    setOpenDialog(true); // Abrir el diálogo
+    setUserIdToDelete(userId);
+    setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
-    setOpenDialog(false); // Cerrar el diálogo
-    setUserIdToDelete(null); // Limpiar el ID del usuario
+    setOpenDialog(false); 
+    setUserIdToDelete(null);
   };
 
   const handleDeleteUser = async () => {
@@ -75,7 +74,7 @@ const AdminPanel = () => {
           },
         }
       );
-      setUsers(users.filter((user) => user.id !== userIdToDelete)); // Actualizar la lista de usuarios
+      setUsers(users.filter((user) => user.id !== userIdToDelete)); 
       toast.success("Usuario eliminado exitosamente.", {
         position: "bottom-right",
         autoClose: 5000,
@@ -86,9 +85,9 @@ const AdminPanel = () => {
       });
     } catch (error) {
       console.error("Error deleting user:", error);
-      setError("Error al eliminar el usuario."); // Mostrar error
+      setError("Error al eliminar el usuario."); 
     } finally {
-      handleCloseDialog(); // Cerrar el diálogo
+      handleCloseDialog(); 
     }
   };
 
@@ -101,7 +100,7 @@ const AdminPanel = () => {
         variant="contained"
         color="primary"
         component={Link}
-        to="/create-user" // Ajusta la ruta según la implementación de tu creación de usuario
+        to="/create-user" 
       >
         Crear Nuevo Usuario
       </Button>
@@ -125,7 +124,7 @@ const AdminPanel = () => {
                   <Button
                     variant="contained"
                     color="secondary"
-                    onClick={() => handleOpenDialog(user.id)} // Abrir diálogo al hacer clic
+                    onClick={() => handleOpenDialog(user.id)} 
                   >
                     Eliminar
                   </Button>

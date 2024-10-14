@@ -1,14 +1,13 @@
 const nodemailer = require("nodemailer");
-require("dotenv").config(); // Cargar variables de entorno
+require("dotenv").config(); 
 
 // Configuración del transporte
 const transporter = nodemailer.createTransport({
-  service: "gmail", // Puedes usar otros servicios como SendGrid, Mailgun, etc.
+  service: "gmail", 
   auth: {
-    user: process.env.EMAIL_USER, // Tu correo electrónico
-    pass: process.env.EMAIL_PASS, // Tu contraseña de correo
+    user: process.env.EMAIL_USER, 
+    pass: process.env.EMAIL_PASS,
   },
 });
 
 module.exports = transporter;
-// prueba

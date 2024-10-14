@@ -11,9 +11,9 @@ import {
   Select,
   MenuItem,
   Snackbar,
-} from "@mui/material"; // Importa componentes de MUI
-import MuiAlert from "@mui/material/Alert"; // Importa el componente Alert
-import { toast } from "react-toastify"; // Importa toast
+} from "@mui/material"; 
+import MuiAlert from "@mui/material/Alert"; 
+import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
 const CreateUser = ({ companyId }) => {
@@ -25,20 +25,20 @@ const CreateUser = ({ companyId }) => {
   const navigate = useNavigate();
 
   const handleCreateUser = async (e) => {
-    e.preventDefault(); // Previene el comportamiento por defecto del formulario
+    e.preventDefault(); 
     try {
-      const token = localStorage.getItem("token"); // Recuperar el token del localStorage
+      const token = localStorage.getItem("token"); 
       await axios.post(
-        process.env.REACT_APP_BACKEND_URL + `/users/register`, // Ajusta la ruta si es necesario
+        process.env.REACT_APP_BACKEND_URL + `/users/register`,
         {
-          company_id: companyId, // Incluye el ID de la compañía
+          company_id: companyId, 
           email,
           password,
           role,
         },
         {
           headers: {
-            Authorization: `${token}`, // Incluir el token en el encabezado
+            Authorization: `${token}`,
           },
         }
       );
@@ -55,7 +55,7 @@ const CreateUser = ({ companyId }) => {
       navigate("/admin-panel");
     } catch (error) {
       console.error("Error creating user:", error);
-      setError("Error al crear el usuario."); // Mostrar error
+      setError("Error al crear el usuario."); 
     }
   };
 
@@ -104,7 +104,6 @@ const CreateUser = ({ companyId }) => {
           Crear Usuario
         </Button>
       </form>
-      {/* Snackbar para mostrar mensajes de éxito o error */}
       <Snackbar
         open={success}
         autoHideDuration={6000}

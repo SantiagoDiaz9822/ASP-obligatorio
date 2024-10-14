@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLocation } from "react-router-dom"; // Para obtener el token de la URL
+import { useLocation } from "react-router-dom"; 
 import axios from "axios";
 import { Container, Typography, TextField, Button } from "@mui/material";
 import { toast } from "react-toastify";
@@ -12,7 +12,6 @@ const ResetPassword = () => {
 
   const location = useLocation();
 
-  // Extraer el token de la URL
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tokenFromUrl = params.get("token");

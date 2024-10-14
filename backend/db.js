@@ -10,7 +10,6 @@ const connection = mysql.createConnection({
   port: process.env.DB_PORT || 3306, 
 });
 
-// Verificar si la conexión fue exitosa
 connection.connect((err) => {
   if (err) {
     console.error("Error conectando a la base de datos:", err.stack);

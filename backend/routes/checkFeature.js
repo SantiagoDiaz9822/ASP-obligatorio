@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const connection = require("../db"); // Conexión a la base de datos
-const redis = require("redis"); // Importa Redis para caching
+const connection = require("../db"); 
+const redis = require("redis");
 
 // Configura Redis usando la URL del archivo .env
 const redisClient = redis.createClient({
@@ -28,7 +28,6 @@ router.post("/:feature_key", async (req, res) => {
   const featureKey = req.params.feature_key;
   const context = req.body;
 
-  // Validar que se reciba el feature_key y el contexto
   if (!featureKey || !context) {
     return res
       .status(400)
@@ -36,15 +35,12 @@ router.post("/:feature_key", async (req, res) => {
   }
 
   try {
-    // Primero, revisa el cache
     const cachedData = await redisClient.get(featureKey);
     let isFeatureEnabled;
 
     if (cachedData) {
-      // Si hay datos en el cache, parseamos y usamos el valor
       isFeatureEnabled = JSON.parse(cachedData).value;
     } else {
-      // Consultar la base de datos para obtener la característica
       const query = "SELECT * FROM features WHERE feature_key = ?";
       const results = await new Promise((resolve, reject) => {
         connection.query(query, [featureKey], (err, results) => {
@@ -126,12 +122,11 @@ router.post("/:feature_key", async (req, res) => {
 
 // Función para evaluar condiciones
 function evaluateConditions(conditions, context) {
-  let isEnabled = true; // Inicializa el estado de la característica
+  let isEnabled = true; 
 
   for (const condition of conditions) {
     const { field, operator, value } = condition;
 
-    // Realiza la evaluación de la condición según el operador
     switch (operator) {
       case "equals":
         isEnabled = isEnabled && context[field] === value;
@@ -158,7 +153,6 @@ function evaluateConditions(conditions, context) {
         isEnabled = false;
     }
 
-    // Si en algún punto isEnabled es false, podemos salir del bucle
     if (!isEnabled) break;
   }
 

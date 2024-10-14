@@ -8,13 +8,13 @@ const auth = require("../middleware/auth");
 const authorize = require("../middleware/authorize");
 const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
-const transporter = require("../mailer"); // Asegúrate de que tu transportador esté configurado
+const transporter = require("../mailer");
 
 // Configura AWS S3
 const s3 = new aws.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  sessionToken: process.env.AWS_SESSION_TOKEN, // Agregar esto para las credenciales temporales
+  sessionToken: process.env.AWS_SESSION_TOKEN, 
   region: process.env.AWS_REGION,
 });
 
@@ -37,7 +37,7 @@ router.post(
   "/new",
   auth,
   authorize("admin"),
-  upload.single("logo"), // Middleware para manejar la subida del logo
+  upload.single("logo"),
   [
     body("name")
       .notEmpty()
@@ -51,7 +51,7 @@ router.post(
     }
 
     const { name, address } = req.body;
-    const logoUrl = req.file.location; // Obtén la URL del archivo subido
+    const logoUrl = req.file.location;
 
     const query =
       "INSERT INTO companies (name, address, logo_url) VALUES (?, ?, ?)";
@@ -89,13 +89,13 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const companyId = req.params.id; // ID de la empresa
+    const companyId = req.params.id;
     const { email, password, role } = req.body;
 
     // Hashear la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
     const userQuery =
-      "INSERT INTO users (company_id, email, password_hash, role, first_login) VALUES (?, ?, ?, ?, false)"; // Almacenar first_login como false
+      "INSERT INTO users (company_id, email, password_hash, role, first_login) VALUES (?, ?, ?, ?, false)";
 
     connection.query(
       userQuery,
