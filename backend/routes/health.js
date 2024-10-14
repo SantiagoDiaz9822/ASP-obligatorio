@@ -4,6 +4,18 @@ const mysql = require("mysql2");
 const connection = require("../db");
 
 // Endpoint para verificar la salud del sistema
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Verificar la salud del sistema
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: El servicio está funcionando correctamente
+ *       500:
+ *         description: Error al conectar con la base de datos o error inesperado
+ */
 router.get("/", async (req, res) => {
   try {
     // Verifica la conexión a la base de datos

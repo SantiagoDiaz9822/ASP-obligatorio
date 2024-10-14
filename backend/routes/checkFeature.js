@@ -5,7 +5,7 @@ const redis = require("redis");
 
 let isRedisConnected = false;
 
-// Configura Redis usando la URL del archivo .env
+// Configura Redis
 const redisClient = redis.createClient({
   url: process.env.REDIS_URL,
 });
@@ -28,7 +28,57 @@ redisClient.on("error", (err) => {
   isRedisConnected = false;
 });
 
-// Ruta para consultar el estado de una característica mediante su feature_key
+/**
+ * @swagger
+ * tags:
+ *   name: Feature Check
+ *   description: API para consultar el estado de las características
+ */
+
+/**
+ * @swagger
+ * /check-feature/{feature_key}:
+ *   post:
+ *     summary: Consultar el estado de una característica
+ *     tags: [Feature Check]
+ *     parameters:
+ *       - in: path
+ *         name: feature_key
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Clave de la característica a consultar
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               context:
+ *                 type: object
+ *                 description: Contexto para evaluar la característica
+ *                 example:
+ *                   userRole: "admin"
+ *                   userId: 123
+ *     responses:
+ *       200:
+ *         description: Estado de la característica consultada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 value:
+ *                   type: boolean
+ *                   description: Indica si la característica está habilitada
+ *       400:
+ *         description: Parámetros inválidos
+ *       404:
+ *         description: Característica no encontrada
+ *       500:
+ *         description: Error interno del servidor
+ */
 router.post("/:feature_key", async (req, res) => {
   const featureKey = req.params.feature_key;
   const context = req.body;

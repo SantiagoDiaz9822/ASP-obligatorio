@@ -1,16 +1,49 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken"); 
-const { body, validationResult } = require("express-validator"); 
-const connection = require("../db"); 
-const transporter = require("../mailer"); 
-require("dotenv").config(); 
+const jwt = require("jsonwebtoken");
+const { body, validationResult } = require("express-validator");
+const connection = require("../db");
+const transporter = require("../mailer");
+require("dotenv").config();
 const JWT_SECRET = process.env.JWT_SECRET;
 const auth = require("../middleware/auth");
-const authorize = require("../middleware/authorize"); 
+const authorize = require("../middleware/authorize");
 
 // Ruta para registrar un usuario (protegido, solo administradores)
+/**
+ * @swagger
+ * /users/register:
+ *   post:
+ *     summary: Registrar un nuevo usuario
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "usuario@example.com"
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *                 example: "password123"
+ *               role:
+ *                 type: string
+ *                 enum: [admin, user]
+ *                 example: "user"
+ *     responses:
+ *       201:
+ *         description: Usuario creado exitosamente
+ *       400:
+ *         description: Error de validación
+ *       500:
+ *         description: Error interno del servidor
+ */
 router.post(
   "/register",
   auth,
@@ -83,6 +116,33 @@ router.post(
 );
 
 // Ruta para asignar un usuario a una empresa
+/**
+ * @swagger
+ * /users/assign-to-company:
+ *   post:
+ *     summary: Asignar un usuario a una empresa
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_id:
+ *                 type: string
+ *                 example: "123"
+ *               company_id:
+ *                 type: string
+ *                 example: "456"
+ *     responses:
+ *       200:
+ *         description: Usuario asignado a la empresa exitosamente
+ *       400:
+ *         description: Error de validación
+ *       500:
+ *         description: Error interno del servidor
+ */
 router.post(
   "/assign-to-company",
   auth,
@@ -118,6 +178,34 @@ router.post(
 );
 
 // Ruta para iniciar sesión
+/**
+ * @swagger
+ * /users/login:
+ *   post:
+ *     summary: Iniciar sesión
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "usuario@example.com"
+ *               password:
+ *                 type: string
+ *                 example: "password123"
+ *     responses:
+ *       200:
+ *         description: Inicio de sesión exitoso
+ *       400:
+ *         description: Error de validación
+ *       401:
+ *         description: Credenciales incorrectas
+ */
 router.post(
   "/login",
   [
@@ -158,7 +246,7 @@ router.post(
 
       const token = jwt.sign(
         { id: user.id, role: user.role, company_id: user.company_id },
-        JWT_SECRET,
+        process.env.JWT_SECRET,
         {
           expiresIn: "1h",
         }
@@ -176,6 +264,41 @@ router.post(
 );
 
 // Ruta para restablecer la contraseña usando el token
+/**
+ * @swagger
+ * /reset-password:
+ *   post:
+ *     summary: Restablecer la contraseña
+ *     description: Restablece la contraseña de un usuario utilizando un token de verificación.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Token de verificación para restablecer la contraseña.
+ *               new_password:
+ *                 type: string
+ *                 description: Nueva contraseña del usuario.
+ *             required:
+ *               - token
+ *               - new_password
+ *     responses:
+ *       200:
+ *         description: Contraseña restablecida exitosamente.
+ *       400:
+ *         description: Error de validación de los datos proporcionados.
+ *       401:
+ *         description: Token inválido o expirado.
+ *       404:
+ *         description: Usuario no encontrado.
+ *       500:
+ *         description: Error al actualizar la contraseña.
+ */
 router.post(
   "/reset-password",
   [
@@ -225,6 +348,21 @@ router.post(
 );
 
 // Ruta para obtener todos los usuarios (protegida, solo administradores)
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Obtener todos los usuarios
+ *     description: Devuelve una lista de todos los usuarios (solo accesible por administradores).
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios.
+ *       401:
+ *         description: Acceso no autorizado.
+ *       500:
+ *         description: Error al obtener los usuarios.
+ */
 router.get("/", auth, authorize("admin"), (req, res) => {
   const query = "SELECT * FROM users";
   connection.query(query, (err, results) => {
@@ -239,6 +377,30 @@ router.get("/", auth, authorize("admin"), (req, res) => {
 });
 
 // Ruta para obtener un usuario por ID (protegida, solo administradores)
+/**
+ * @swagger
+ * /users/{id}:
+ *   get:
+ *     summary: Obtener un usuario por ID
+ *     description: Devuelve los detalles de un usuario específico por su ID (solo accesible por administradores).
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID del usuario a obtener.
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Usuario encontrado.
+ *       401:
+ *         description: Acceso no autorizado.
+ *       404:
+ *         description: Usuario no encontrado.
+ *       500:
+ *         description: Error al obtener el usuario.
+ */
 router.get("/:id", auth, authorize("admin"), (req, res) => {
   const userId = req.params.id;
 
@@ -256,6 +418,46 @@ router.get("/:id", auth, authorize("admin"), (req, res) => {
 });
 
 // Ruta para actualizar un usuario (protegida, solo administradores)
+/**
+ * @swagger
+ * /users/{id}:
+ *   put:
+ *     summary: Actualizar un usuario
+ *     description: Actualiza la información de un usuario específico (solo accesible por administradores).
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID del usuario a actualizar.
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: Nuevo correo electrónico del usuario.
+ *               role:
+ *                 type: string
+ *                 enum: [admin, user]
+ *                 description: Nuevo rol del usuario.
+ *     responses:
+ *       200:
+ *         description: Usuario actualizado exitosamente.
+ *       400:
+ *         description: Error de validación de los datos proporcionados.
+ *       401:
+ *         description: Acceso no autorizado.
+ *       404:
+ *         description: Usuario no encontrado.
+ *       500:
+ *         description: Error al actualizar el usuario.
+ */
 router.put(
   "/:id",
   auth,
@@ -292,6 +494,30 @@ router.put(
 );
 
 // Ruta para eliminar un usuario (protegida, solo administradores)
+/**
+ * @swagger
+ * /users/{id}:
+ *   delete:
+ *     summary: Eliminar un usuario
+ *     description: Elimina un usuario específico por su ID (solo accesible por administradores).
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID del usuario a eliminar.
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Usuario eliminado exitosamente.
+ *       401:
+ *         description: Acceso no autorizado.
+ *       404:
+ *         description: Usuario no encontrado.
+ *       500:
+ *         description: Error al eliminar el usuario.
+ */
 router.delete("/:id", auth, authorize("admin"), (req, res) => {
   const userId = req.params.id;
 

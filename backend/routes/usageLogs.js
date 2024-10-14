@@ -33,6 +33,37 @@ redisClient.on("error", (err) => {
 router.use(auth);
 
 // Ruta para obtener el reporte de uso
+/**
+ * @swagger
+ * /usage/report:
+ *   get:
+ *     summary: Obtener un reporte de uso
+ *     tags: [Usage]
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         description: Fecha de inicio para el reporte
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2024-01-01"
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         description: Fecha de fin para el reporte
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2024-12-31"
+ *     responses:
+ *       200:
+ *         description: Reporte de uso obtenido exitosamente
+ *       400:
+ *         description: Se requieren las fechas de inicio y fin
+ *       500:
+ *         description: Error al obtener el reporte de uso
+ */
 router.get("/report", async (req, res) => {
   const { startDate, endDate } = req.query;
   const userId = req.userId;

@@ -13,6 +13,33 @@ const generateApiKey = () => {
 router.use(auth);
 
 // Ruta para definir un nuevo proyecto (protegida)
+/**
+ * @swagger
+ * /projects/new:
+ *   post:
+ *     summary: Crear un nuevo proyecto
+ *     tags: [Projects]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Nuevo Proyecto"
+ *               description:
+ *                 type: string
+ *                 example: "Descripción del nuevo proyecto"
+ *     responses:
+ *       201:
+ *         description: Proyecto creado exitosamente
+ *       400:
+ *         description: Errores de validación
+ *       500:
+ *         description: Error al crear el proyecto
+ */
 router.post(
   "/new",
   [
@@ -80,8 +107,20 @@ router.post(
 );
 
 // Leer todos los proyectos del usuario
+/**
+ * @swagger
+ * /projects:
+ *   get:
+ *     summary: Obtener todos los proyectos del usuario
+ *     tags: [Projects]
+ *     responses:
+ *       200:
+ *         description: Lista de proyectos del usuario
+ *       500:
+ *         description: Error al obtener los proyectos
+ */
 router.get("/", (req, res) => {
-  const userId = req.userId; 
+  const userId = req.userId;
 
   const queryUser = "SELECT company_id FROM users WHERE id = ?";
   connection.query(queryUser, [userId], (err, userResults) => {
@@ -114,6 +153,27 @@ router.get("/", (req, res) => {
 });
 
 // Leer un proyecto por ID
+/**
+ * @swagger
+ * /projects/{id}:
+ *   get:
+ *     summary: Obtener un proyecto por ID
+ *     tags: [Projects]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID del proyecto
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Proyecto encontrado
+ *       404:
+ *         description: Proyecto no encontrado
+ *       500:
+ *         description: Error al obtener el proyecto
+ */
 router.get("/:id", (req, res) => {
   const projectId = req.params.id;
 
@@ -131,6 +191,27 @@ router.get("/:id", (req, res) => {
 });
 
 // Obtener todas las features de un proyecto específico
+/**
+ * @swagger
+ * /projects/{id}/features:
+ *   get:
+ *     summary: Obtener todas las features de un proyecto
+ *     tags: [Projects]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID del proyecto
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Lista de features del proyecto
+ *       403:
+ *         description: No tienes acceso a este proyecto
+ *       500:
+ *         description: Error al obtener las features
+ */
 router.get("/:id/features", (req, res) => {
   const projectId = req.params.id;
 
@@ -163,6 +244,29 @@ router.get("/:id/features", (req, res) => {
 });
 
 // Eliminar un proyecto (solo si no tiene features)
+/**
+ * @swagger
+ * /projects/{id}:
+ *   delete:
+ *     summary: Eliminar un proyecto
+ *     tags: [Projects]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID del proyecto
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Proyecto eliminado exitosamente
+ *       400:
+ *         description: El proyecto tiene features asociadas
+ *       404:
+ *         description: Proyecto no encontrado
+ *       500:
+ *         description: Error al eliminar el proyecto
+ */
 router.delete("/:id", (req, res) => {
   const projectId = req.params.id;
 

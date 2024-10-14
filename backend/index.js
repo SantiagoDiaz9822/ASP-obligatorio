@@ -5,6 +5,8 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const { Server } = require("socket.io");
 const http = require("http");
+const swaggerJSDoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
 
 // Importar Rutas
 const companiesRoutes = require("./routes/companies");
@@ -29,6 +31,23 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
+
+// Configurar Swagger
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "API de Feature Toggling",
+      version: "1.0.0",
+      description:
+        "API para gestionar características utilizando feature toggles",
+    },
+  },
+  apis: ["./routes/*.js"], // Rutas donde están definidas las anotaciones
+};
+
+const swaggerDocs = swaggerJSDoc(swaggerOptions);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Usar Rutas
 app.use("/companies", companiesRoutes);
