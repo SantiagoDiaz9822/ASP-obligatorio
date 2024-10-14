@@ -1,23 +1,40 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
-const auth = require("../middleware/auth"); 
-const redis = require("redis"); 
+const auth = require("../middleware/auth");
+const redis = require("redis");
 require("dotenv").config();
+let isRedisConnected = false;
 
-// Configura Redis
+// Configura Redis usando la URL del archivo .env
 const redisClient = redis.createClient({
   url: process.env.REDIS_URL,
 });
 
-redisClient.connect();
+// Conectar a Redis
+redisClient
+  .connect()
+  .then(() => {
+    console.log("Conectado a Redis");
+    isRedisConnected = true;
+  })
+  .catch((err) => {
+    console.error("Error conectando a Redis");
+    isRedisConnected = false;
+  });
+
+// Maneja los errores de Redis
+redisClient.on("error", (err) => {
+  console.error("Error conectando a Redis");
+  isRedisConnected = false;
+});
 
 // Rutas protegidas (usa el middleware)
 router.use(auth);
 
 // Ruta para obtener el reporte de uso
 router.get("/report", async (req, res) => {
-  const { startDate, endDate } = req.query; 
+  const { startDate, endDate } = req.query;
   const userId = req.userId;
 
   if (!startDate || !endDate) {
@@ -29,7 +46,12 @@ router.get("/report", async (req, res) => {
   const cacheKey = `usage_report_${userId}_${startDate}_${endDate}`;
 
   try {
-    const cachedData = await redisClient.get(cacheKey);
+    let cachedData;
+
+    if (isRedisConnected) {
+      cachedData = await redisClient.get(cacheKey);
+    }
+
     if (cachedData) {
       return res.json(JSON.parse(cachedData));
     }
@@ -61,7 +83,10 @@ router.get("/report", async (req, res) => {
           .status(500)
           .json({ message: "Error al obtener el reporte de uso." });
       }
-      redisClient.setEx(cacheKey, 3600, JSON.stringify(results));
+
+      if (isRedisConnected) {
+        redisClient.setEx(cacheKey, 3600, JSON.stringify(results));
+      }
 
       res.json(results);
     });

@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const connection = require("../db"); 
+const connection = require("../db");
 const redis = require("redis");
+
+let isRedisConnected = false;
 
 // Configura Redis usando la URL del archivo .env
 const redisClient = redis.createClient({
@@ -13,14 +15,17 @@ redisClient
   .connect()
   .then(() => {
     console.log("Conectado a Redis");
+    isRedisConnected = true;
   })
   .catch((err) => {
-    console.error("Error conectando a Redis:", err);
+    console.error("Error conectando a Redis");
+    isRedisConnected = false;
   });
 
 // Maneja los errores de Redis
 redisClient.on("error", (err) => {
-  console.error("Redis error:", err);
+  console.error("Error conectando a Redis");
+  isRedisConnected = false;
 });
 
 // Ruta para consultar el estado de una característica mediante su feature_key
@@ -35,8 +40,12 @@ router.post("/:feature_key", async (req, res) => {
   }
 
   try {
-    const cachedData = await redisClient.get(featureKey);
     let isFeatureEnabled;
+    let cachedData;
+
+    if (isRedisConnected) {
+      cachedData = await redisClient.get(featureKey);
+    }
 
     if (cachedData) {
       isFeatureEnabled = JSON.parse(cachedData).value;
@@ -59,7 +68,6 @@ router.post("/:feature_key", async (req, res) => {
 
       const feature = results[0];
 
-      // Manejar posibles problemas al parsear feature.conditions
       let conditions = [];
       if (
         typeof feature.conditions === "string" &&
@@ -80,17 +88,16 @@ router.post("/:feature_key", async (req, res) => {
         );
       }
 
-      // Evaluar si el feature está habilitado
       isFeatureEnabled = evaluateConditions(conditions, context);
 
-      // Almacenar el resultado en cache
-      await redisClient.setEx(
-        featureKey,
-        3600,
-        JSON.stringify({ value: isFeatureEnabled })
-      );
+      if (isRedisConnected) {
+        await redisClient.setEx(
+          featureKey,
+          3600,
+          JSON.stringify({ value: isFeatureEnabled })
+        );
+      }
 
-      // Registrar el uso del feature
       const usageLogQuery =
         "INSERT INTO usage_logs (feature_id, project_id, context, response, created_at) VALUES (?, ?, ?, ?, NOW())";
       await new Promise((resolve, reject) => {
@@ -112,7 +119,6 @@ router.post("/:feature_key", async (req, res) => {
       });
     }
 
-    // Devolver el estado de la característica
     return res.json({ value: isFeatureEnabled });
   } catch (error) {
     console.error("Error:", error);
@@ -122,7 +128,7 @@ router.post("/:feature_key", async (req, res) => {
 
 // Función para evaluar condiciones
 function evaluateConditions(conditions, context) {
-  let isEnabled = true; 
+  let isEnabled = true;
 
   for (const condition of conditions) {
     const { field, operator, value } = condition;
