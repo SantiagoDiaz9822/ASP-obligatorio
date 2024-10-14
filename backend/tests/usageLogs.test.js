@@ -19,11 +19,12 @@ jest.mock("redis", () => ({
       (mockRedisClient = {
         get: jest.fn(),
         setEx: jest.fn(),
-        connect: jest.fn(),
+        connect: jest.fn(() => Promise.resolve()),
         on: jest.fn(),
       })
   ),
 }));
+
 
 // Inicializa la aplicación Express
 const app = express();

@@ -16,7 +16,7 @@ services:
       context: ./frontend/feature-toggle
       dockerfile: Dockerfile
     ports:
-      - "3001:3000"
+      - "3001:3001"
     env_file:
       - ./frontend/feature-toggle/.env
     depends_on:
