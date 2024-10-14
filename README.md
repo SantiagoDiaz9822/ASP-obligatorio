@@ -52,4 +52,8 @@ Copia el archivo .env.tex a .env y ajusta las configuraciones según sea necesar
 
 ### 5. Acceder a la aplicación
 
+### 6. Ejecutar la aplicación con Docker
+
+```docker-compose up --build```
+
 Abre tu navegador y ve a http://localhost:3000/login para ver la aplicación en acción.
