@@ -7,12 +7,13 @@ const companyController = require("../controllers/companyController");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
 const s3 = require("../config/s3"); // Importar la configuración de S3
+require("dotenv").config();
 
 // Configurar multer para subir archivos a S3
 const upload = multer({
   storage: multerS3({
     s3: s3,
-    bucket: process.env.AWS_S3_BUCKET_NAME,
+    bucket: process.env.AWS_S3_BUCKET_NAME, // Verifica que esta variable esté definida
     acl: "public-read",
     key: function (req, file, cb) {
       cb(null, `company-logos/${Date.now().toString()}_${file.originalname}`);

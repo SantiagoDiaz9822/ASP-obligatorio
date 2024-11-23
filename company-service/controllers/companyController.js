@@ -1,6 +1,4 @@
 const connection = require("../config/db");
-const s3 = require("../config/s3");
-const { validationResult } = require("express-validator");
 
 const axios = require("axios"); // Asegúrate de tener axios instalado
 
