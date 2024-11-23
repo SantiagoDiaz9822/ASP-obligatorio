@@ -1,18 +1,21 @@
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
+const JWT_SECRET = process.env.JWT_SECRET;
 
+// Middleware para proteger rutas
 const auth = (req, res, next) => {
-  const token = req.headers["authorization"]
+  const token = req.headers["authorization"];
+
   if (!token) {
-    return res.status(401).json({ message: "Token no proporcionado." });
+    return res.status(403).json({ message: "Token no proporcionado." });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(401).json({ message: "Token inválido o expirado." });
+      return res.status(401).json({ message: "Token inválido." });
     }
     req.userId = decoded.id;
-    req.role = decoded.role;
-    req.companyId = decoded.company_id;
+    req.userRole = decoded.role;
     next();
   });
 };
