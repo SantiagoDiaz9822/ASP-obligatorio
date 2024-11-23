@@ -1,84 +1,56 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const connection = require("../config/db");
-const transporter = require("../services/mailer");
+const express = require("express");
+const router = express.Router();
+const { body } = require("express-validator");
+const userController = require("../controllers/userController");
+const auth = require("../middleware/auth");
+const authorize = require("../middleware/authorize");
 
-const registerUser = async (req, res) => {
-  const { email, password, role } = req.body;
+// Ruta para registrar un nuevo usuario (solo administradores)
+router.post(
+  "/register",
+  auth,
+  authorize("admin"),
+  [
+    body("email").isEmail().withMessage("El correo debe ser un email válido"),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("La contraseña debe tener al menos 6 caracteres"),
+    body("role")
+      .isIn(["admin", "user"])
+      .withMessage('El rol debe ser "admin" o "user".'),
+  ],
+  userController.registerUser
+);
 
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const query =
-      "INSERT INTO users (email, password_hash, role, first_login) VALUES (?, ?, ?, false)";
+// Ruta para iniciar sesión
+router.post(
+  "/login",
+  [
+    body("email").isEmail().withMessage("El correo debe ser un email válido"),
+    body("password").notEmpty().withMessage("La contraseña es requerida"),
+  ],
+  userController.loginUser
+);
 
-    connection.query(query, [email, hashedPassword, role], (err, results) => {
-      if (err) {
-        console.error("Error al registrar el usuario:", err);
-        return res
-          .status(500)
-          .json({ message: "Error al registrar el usuario." });
-      }
+// Ruta para asignar un usuario a una empresa (solo administradores)
+router.post(
+  "/assign-to-company",
+  auth,
+  authorize("admin"),
+  [
+    body("user_id").notEmpty().withMessage("El user_id es requerido."),
+    body("company_id").notEmpty().withMessage("El company_id es requerido."),
+  ],
+  userController.assignUserToCompany
+);
 
-      const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-        expiresIn: "1h",
-      });
+// Ruta para obtener el company_id de un usuario
+router.get("/:id/company", auth, userController.getCompanyIdForUser);
 
-      // Enviar email de bienvenida
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: "Bienvenido a la aplicación",
-        text: `Hola, gracias por registrarte. Usa este enlace para configurar tu contraseña: ${process.env.FRONTEND_URL}/reset-password?token=${token}`,
-      };
+// Ruta para obtener todos los usuarios (solo administradores)
+router.get("/", auth, authorize("admin"), userController.getAllUsers);
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error("Error al enviar el correo:", error);
-        } else {
-          console.log("Correo enviado:", info.response);
-        }
-      });
+// Ruta para obtener un usuario por ID (solo administradores)
+router.get("/:id", auth, authorize("admin"), userController.getUserById);
 
-      res
-        .status(201)
-        .json({
-          message: "Usuario creado exitosamente",
-          userId: results.insertId,
-        });
-    });
-  } catch (error) {
-    console.error("Error al registrar el usuario:", error);
-    res.status(500).json({ message: "Error interno del servidor." });
-  }
-};
-
-// Login
-const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-
-  const query = "SELECT * FROM users WHERE email = ?";
-  connection.query(query, [email], async (err, results) => {
-    if (err) {
-      console.error("Error al buscar el usuario:", err);
-      return res.status(500).json({ message: "Error al buscar el usuario." });
-    }
-
-    if (
-      results.length === 0 ||
-      !(await bcrypt.compare(password, results[0].password_hash))
-    ) {
-      return res.status(401).json({ message: "Credenciales incorrectas." });
-    }
-
-    const user = results[0];
-    const token = jwt.sign(
-      { id: user.id, role: user.role, company_id: user.company_id },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-
-    res.json({ message: "Inicio de sesión exitoso", token });
-  });
-};
-
-module.exports = { registerUser, loginUser };
+module.exports = router;

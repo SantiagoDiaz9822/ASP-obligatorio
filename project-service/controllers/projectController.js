@@ -1,27 +1,19 @@
 const connection = require("../config/db");
 const { generateApiKey } = require("../services/apiKeyGenerator");
 const { validationResult } = require("express-validator");
+const axios = require("axios"); // Asegúrate de tener axios instalado
 
-// Crear un nuevo proyecto
-const createProject = (req, res) => {
+// Crear un proyecto
+const createProject = async (req, res) => {
   const { name, description } = req.body;
   const userId = req.userId;
 
-  // Validación de los datos
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  // Obtener el company_id del usuario actual
-  const queryUser = "SELECT company_id FROM users WHERE id = ?";
-  connection.query(queryUser, [userId], (err, userResults) => {
-    if (err) {
-      console.error("Error al obtener la empresa del usuario:", err);
-      return res.status(500).json({ message: "Error al obtener la empresa." });
-    }
-
-    const companyId = userResults[0].company_id;
+  try {
+    // Obtener el company_id desde el servicio de usuarios
+    const userResponse = await axios.get(
+      `${process.env.USER_SERVICE_URL}/api/users/${userId}/company`
+    );
+    const companyId = userResponse.data.company_id;
 
     const apiKey = generateApiKey();
 
@@ -38,6 +30,22 @@ const createProject = (req, res) => {
             .json({ message: "Error al crear el proyecto." });
         }
 
+        // Registrar la creación del proyecto en el servicio de auditoría
+        axios
+          .post(`${process.env.AUDIT_SERVICE_URL}/api/audit/log`, {
+            action: "create",
+            entity: "project",
+            entityId: results.insertId,
+            details: { name, description, companyId },
+            userId: userId,
+          })
+          .then(() => {
+            console.log("Auditoría registrada para la creación del proyecto.");
+          })
+          .catch((err) => {
+            console.error("Error al registrar la auditoría:", err);
+          });
+
         res.status(201).json({
           message: "Proyecto creado exitosamente",
           projectId: results.insertId,
@@ -45,23 +53,60 @@ const createProject = (req, res) => {
         });
       }
     );
+  } catch (error) {
+    console.error("Error al obtener el company_id del usuario:", error);
+    return res
+      .status(500)
+      .json({ message: "Error al obtener la empresa del usuario." });
+  }
+};
+
+// Eliminar un proyecto
+const deleteProject = (req, res) => {
+  const projectId = req.params.id;
+  const userId = req.userId;
+
+  const query = "DELETE FROM projects WHERE id = ?";
+  connection.query(query, [projectId], (err, results) => {
+    if (err) {
+      console.error("Error al eliminar el proyecto:", err);
+      return res
+        .status(500)
+        .json({ message: "Error al eliminar el proyecto." });
+    }
+
+    // Registrar la eliminación del proyecto en el servicio de auditoría
+    axios
+      .post(`${process.env.AUDIT_SERVICE_URL}/api/audit/log`, {
+        action: "delete",
+        entity: "project",
+        entityId: projectId,
+        details: { projectId },
+        userId: userId,
+      })
+      .then(() => {
+        console.log("Auditoría registrada para la eliminación del proyecto.");
+      })
+      .catch((err) => {
+        console.error("Error al registrar la auditoría:", err);
+      });
+
+    res.json({ message: "Proyecto eliminado exitosamente" });
   });
 };
 
 // Leer todos los proyectos de la empresa
-const getAllProjects = (req, res) => {
+const getAllProjects = async (req, res) => {
   const userId = req.userId;
 
-  // Obtener el company_id del usuario actual
-  const queryUser = "SELECT company_id FROM users WHERE id = ?";
-  connection.query(queryUser, [userId], (err, userResults) => {
-    if (err) {
-      console.error("Error al obtener la empresa del usuario:", err);
-      return res.status(500).json({ message: "Error al obtener la empresa." });
-    }
+  try {
+    // Obtener el company_id desde el servicio de usuarios
+    const userResponse = await axios.get(
+      `${process.env.USER_SERVICE_URL}/api/users/${userId}/company`
+    );
+    const companyId = userResponse.data.company_id;
 
-    const companyId = userResults[0].company_id;
-
+    // Obtener todos los proyectos asociados a la empresa
     const query = "SELECT * FROM projects WHERE company_id = ?";
     connection.query(query, [companyId], (err, results) => {
       if (err) {
@@ -73,7 +118,10 @@ const getAllProjects = (req, res) => {
 
       res.json(results);
     });
-  });
+  } catch (error) {
+    console.error("Error al obtener el company_id del usuario:", error);
+    return res.status(500).json({ message: "Error al obtener los proyectos." });
+  }
 };
 
 // Leer un proyecto por ID
@@ -93,4 +141,9 @@ const getProjectById = (req, res) => {
   });
 };
 
-module.exports = { createProject, getAllProjects, getProjectById };
+module.exports = {
+  createProject,
+  getAllProjects,
+  getProjectById,
+  deleteProject,
+};
