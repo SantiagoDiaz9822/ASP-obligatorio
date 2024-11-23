@@ -40,6 +40,28 @@ const Projects = () => {
     fetchProjects();
   }, []);
 
+  const deleteProject = async (projectId) => {
+    const token = localStorage.getItem("token");
+    try {
+      await axios.delete(
+        `${process.env.REACT_APP_BACKEND_URL}/projects/${projectId}`,
+        {
+          headers: {
+            Authorization: `${token}`,
+          },
+        }
+      );
+      // Eliminar proyecto del estado después de la eliminación exitosa
+      setProjects((prevProjects) =>
+        prevProjects.filter((project) => project.id !== projectId)
+      );
+      toast.success("Proyecto eliminado correctamente.");
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast.error("Error al eliminar el proyecto.");
+    }
+  };
+
   return (
     <Container>
       <Typography variant="h4" gutterBottom>
@@ -81,6 +103,7 @@ const Projects = () => {
                     variant="outlined"
                     color="secondary"
                     style={{ marginLeft: "10px" }}
+                    onClick={() => deleteProject(project.id)}
                   >
                     Eliminar Proyecto
                   </Button>

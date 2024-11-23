@@ -1,28 +1,67 @@
-version: "3.8"
-services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    env_file:
-      - ./backend/.env
-    depends_on:
-      - redis
+version: '3.8'
 
-  frontend:
-    build:
-      context: ./frontend/feature-toggle
-      dockerfile: Dockerfile
+services:
+  user-service:
+    build: ./user-service
     ports:
       - "3001:3001"
-    env_file:
-      - ./frontend/feature-toggle/.env
+    environment:
+      - NODE_ENV=production
+      - RDS_HOSTNAME=your-rds-endpoint
+      - REDIS_URL=your-elasticache-redis-url
+      - JWT_SECRET=your-secret
     depends_on:
-      - backend
+      - db
+
+  company-service:
+    build: ./company-service
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - RDS_HOSTNAME=your-rds-endpoint
+
+  project-service:
+    build: ./project-service
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - RDS_HOSTNAME=your-rds-endpoint
+
+  feature-service:
+    build: ./feature-service
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=production
+      - RDS_HOSTNAME=your-rds-endpoint
+
+  audit-service:
+    build: ./audit-service
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=production
+      - RDS_HOSTNAME=your-rds-endpoint
+
+  report-service:
+    build: ./report-service
+    ports:
+      - "3006:3006"
+    environment:
+      - NODE_ENV=production
+      - RDS_HOSTNAME=your-rds-endpoint
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: your_database
+    ports:
+      - "3306:3306"
 
   redis:
-    image: redis:latest
+    image: redis
     ports:
       - "6379:6379"

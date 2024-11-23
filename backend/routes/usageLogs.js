@@ -19,13 +19,13 @@ redisClient
     isRedisConnected = true;
   })
   .catch((err) => {
-    console.error("Error conectando a Redis");
+    // console.error("Error conectando a Redis");
     isRedisConnected = false;
   });
 
 // Maneja los errores de Redis
 redisClient.on("error", (err) => {
-  console.error("Error conectando a Redis");
+  // console.error("Error conectando a Redis");
   isRedisConnected = false;
 });
 
