@@ -1,10 +1,11 @@
-const express = require("express");
-const router = express.Router();
-const { registerUser, loginUser } = require("../controllers/userController");
-const auth = require("../middleware/auth");
-const authorize = require("../middleware/authorize");
+const nodemailer = require("nodemailer");
 
-router.post("/register", registerUser); // Registrarse
-router.post("/login", loginUser); // Iniciar sesión
+const transporter = nodemailer.createTransport({
+  service: "gmail", // o tu servicio SMTP
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
 
-module.exports = router;
+module.exports = transporter;

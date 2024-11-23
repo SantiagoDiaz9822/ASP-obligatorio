@@ -3,11 +3,7 @@ const router = express.Router();
 const { body } = require("express-validator");
 const auth = require("../middleware/auth");
 const authorize = require("../middleware/authorize");
-const {
-  createProject,
-  getAllProjects,
-  getProjectById,
-} = require("../controllers/projectController");
+const projectController = require("../controllers/projectController");
 
 // Crear un nuevo proyecto (solo administradores)
 router.post(
@@ -20,13 +16,21 @@ router.post(
       .notEmpty()
       .withMessage("La descripción del proyecto es requerida."),
   ],
-  createProject
+  projectController.createProject
 );
 
 // Leer todos los proyectos de la empresa
-router.get("/", auth, getAllProjects);
+router.get("/", auth, projectController.getAllProjects);
 
 // Leer un proyecto por ID
-router.get("/:id", auth, getProjectById);
+router.get("/:id", auth, projectController.getProjectById);
+
+// Eliminar un proyecto (solo administradores)
+router.delete(
+  "/:id",
+  auth,
+  authorize("admin"),
+  projectController.deleteProject
+);
 
 module.exports = router;
