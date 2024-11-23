@@ -1,17 +1,22 @@
+require("dotenv").config();
 const connection = require("../config/db");
 const { generateApiKey } = require("../services/apiKeyGenerator");
-const { validationResult } = require("express-validator");
 const axios = require("axios"); // Asegúrate de tener axios instalado
 
 // Crear un proyecto
 const createProject = async (req, res) => {
   const { name, description } = req.body;
-  const userId = req.userId;
+  const userId = req.userId; // Tomamos el userId del token
 
   try {
-    // Obtener el company_id desde el servicio de usuarios
+    // Obtener el company_id desde el servicio de usuarios, usando el userId desde el token
     const userResponse = await axios.get(
-      `${process.env.USER_SERVICE_URL}/api/users/${userId}/company`
+      `${process.env.USER_SERVICE_URL}/${userId}/company`,
+      {
+        headers: {
+          Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
+        },
+      }
     );
     const companyId = userResponse.data.company_id;
 
@@ -32,7 +37,7 @@ const createProject = async (req, res) => {
 
         // Registrar la creación del proyecto en el servicio de auditoría
         axios
-          .post(`${process.env.AUDIT_SERVICE_URL}/api/audit/log`, {
+          .post(`${process.env.AUDIT_SERVICE_URL}/log`, {
             action: "create",
             entity: "project",
             entityId: results.insertId,
@@ -102,7 +107,12 @@ const getAllProjects = async (req, res) => {
   try {
     // Obtener el company_id desde el servicio de usuarios
     const userResponse = await axios.get(
-      `${process.env.USER_SERVICE_URL}/api/users/${userId}/company`
+      `${process.env.USER_SERVICE_URL}/${userId}/company`,
+      {
+        headers: {
+          Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
+        },
+      }
     );
     const companyId = userResponse.data.company_id;
 
