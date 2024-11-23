@@ -76,7 +76,7 @@ router.delete(
 );
 
 // Leer todas las features de un proyecto
-router.get("/:id", auth, featureController.getFeaturesByProjectId);
+router.get("/projects/:id", auth, featureController.getFeaturesByProjectId);
 
 // Leer una feature por ID
 router.get("/:id", auth, featureController.getFeatureById);
@@ -84,7 +84,6 @@ router.get("/:id", auth, featureController.getFeatureById);
 // Evaluar el estado de una feature
 router.post(
   "/evaluate",
-  auth,
   [
     body("feature_key").notEmpty().withMessage("El feature_key es requerido."),
     body("context")

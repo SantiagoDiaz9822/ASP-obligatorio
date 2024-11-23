@@ -33,4 +33,7 @@ router.delete(
   projectController.deleteProject
 );
 
+// Validar API Key
+router.get("/projects/validate", projectController.validateApiKey);
+
 module.exports = router;

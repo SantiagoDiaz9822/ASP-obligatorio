@@ -30,14 +30,15 @@ const registerUsageLog = (req, res) => {
 
 // Obtener reporte de uso
 const getUsageReport = (req, res) => {
-  const { start_date, end_date } = req.query;
+  const { start_date, end_date, project_id, feature_id } = req.query;
 
-  // Validar parámetros
+  // Validar parámetros requeridos
   if (!start_date || !end_date) {
     return res.status(400).json({ message: "Rango de fechas requerido." });
   }
 
-  const query = `
+  // Construir la consulta SQL dinámica según los filtros
+  let query = `
     SELECT 
       project_id, 
       feature_id, 
@@ -45,16 +46,33 @@ const getUsageReport = (req, res) => {
       DATE_FORMAT(created_at, '%Y-%m-%d %H:00:00') AS hour
     FROM usage_logs
     WHERE created_at BETWEEN ? AND ?
+  `;
+
+  const queryParams = [start_date, end_date];
+
+  // Agregar filtro por project_id si es necesario
+  if (project_id) {
+    query += ` AND project_id = ?`;
+    queryParams.push(project_id);
+  }
+
+  // Agregar filtro por feature_id si es necesario
+  if (feature_id) {
+    query += ` AND feature_id = ?`;
+    queryParams.push(feature_id);
+  }
+
+  // Finalizar la consulta con la agrupación y ordenación
+  query += `
     GROUP BY project_id, feature_id, hour
     ORDER BY hour ASC;
   `;
 
-  connection.query(query, [start_date, end_date], (err, results) => {
+  // Ejecutar la consulta
+  connection.query(query, queryParams, (err, results) => {
     if (err) {
       console.error("Error al obtener el reporte de uso:", err);
-      return res
-        .status(500)
-        .json({ message: "Error al obtener el reporte de uso." });
+      return res.status(500).json({ message: "Error al obtener el reporte de uso." });
     }
     res.json({ data: results });
   });

@@ -151,9 +151,34 @@ const getProjectById = (req, res) => {
   });
 };
 
+// Validar API Key del Proyecto
+const validateApiKey = (req, res) => {
+  const apiKey = req.headers["authorization"];
+
+  if (!apiKey) {
+    return res.status(400).json({ message: "API Key es requerida." });
+  }
+
+  const query = "SELECT id FROM projects WHERE api_key = ?";
+  connection.query(query, [apiKey], (err, results) => {
+    if (err) {
+      console.error("Error al validar la API Key:", err);
+      return res.status(500).json({ message: "Error al validar la API Key." });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "API Key inválida." });
+    }
+
+    const projectId = results[0].id;
+    res.status(200).json({ project_id: projectId });
+  });
+};
+
 module.exports = {
   createProject,
   getAllProjects,
   getProjectById,
   deleteProject,
+  validateApiKey
 };
