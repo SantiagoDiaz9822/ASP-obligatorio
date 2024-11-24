@@ -217,7 +217,7 @@ const getUserById = (req, res) => {
 //obtener todos los usuarios por empresa
 const getUsersByCompanyId = (req, res) => {
   const companyId = req.params.companyId; // Obtener el companyId desde los parámetros de la URL
-
+  console.log("companyId", companyId);
   // Consulta SQL para obtener usuarios por company_id
   const query = "SELECT * FROM users WHERE company_id = ?";
 

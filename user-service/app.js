@@ -11,7 +11,7 @@ app.use(express.json()); // Parsear JSON
 app.use("/users", userRoutes);
 
 // Iniciar el servidor
-const PORT = 3000;
+const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
