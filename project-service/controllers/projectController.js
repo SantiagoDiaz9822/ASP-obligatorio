@@ -40,16 +40,16 @@ const createProject = async (req, res) => {
           .post(
             `${process.env.AUDIT_SERVICE_URL}/log`,
             {
-              headers: {
-                Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
-              },
-            },
-            {
               action: "create",
               entity: "project",
               entityId: results.insertId,
               details: { name, description, companyId },
               userId: userId,
+            },
+            {
+              headers: {
+                Authorization: req.headers["authorization"], // El token se pasa correctamente en los headers
+              },
             }
           )
           .then(() => {
@@ -93,16 +93,16 @@ const deleteProject = (req, res) => {
       .post(
         `${process.env.AUDIT_SERVICE_URL}/log`,
         {
-          headers: {
-            Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
-          },
-        },
-        {
           action: "delete",
           entity: "project",
           entityId: projectId,
           details: { projectId },
           userId: userId,
+        },
+        {
+          headers: {
+            Authorization: req.headers["authorization"], // El token se pasa correctamente en los headers
+          },
         }
       )
       .then(() => {

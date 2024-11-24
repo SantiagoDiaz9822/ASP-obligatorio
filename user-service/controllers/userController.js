@@ -30,16 +30,16 @@ const registerUser = async (req, res) => {
         .post(
           `${process.env.AUDIT_SERVICE_URL}/log`,
           {
-            headers: {
-              Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
-            },
-          },
-          {
             action: "create",
             entity: "user",
             entityId: results.insertId,
             details: { email, role },
             userId: userId, // Agregar el ID del usuario que realizó la acción
+          },
+          {
+            headers: {
+              Authorization: req.headers["authorization"], // El token se pasa correctamente en los headers
+            },
           }
         )
         .then(() => {
@@ -214,6 +214,60 @@ const getUserById = (req, res) => {
   });
 };
 
+//obtener todos los usuarios por empresa
+const getUsersByCompanyId = (req, res) => {
+  const companyId = req.params.companyId; // Obtener el companyId desde los parámetros de la URL
+
+  // Consulta SQL para obtener usuarios por company_id
+  const query = "SELECT * FROM users WHERE company_id = ?";
+
+  connection.query(query, [companyId], (err, results) => {
+    if (err) {
+      console.error("Error al obtener usuarios por company_id:", err);
+      return res
+        .status(500)
+        .json({ message: "Error al obtener usuarios de la empresa." });
+    }
+
+    if (results.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No se encontraron usuarios para esta empresa." });
+    }
+
+    // Responder con los usuarios encontrados
+    res.status(200).json(results);
+  });
+};
+
+// Ruta para suscribirse o desuscribirse del sistema de notificaciones
+const toggleSubscription = (req, res) => {
+  const { userId } = req.params; // ID del usuario que va a ser actualizado
+  const { is_subscribed } = req.body; // El valor booleano que indica si se suscribe o desuscribe
+
+  if (typeof is_subscribed !== "boolean") {
+    return res
+      .status(400)
+      .json({ message: "El campo is_subscribed debe ser un valor booleano." });
+  }
+
+  const query = "UPDATE users SET is_subscribed = ? WHERE id = ?";
+  connection.query(query, [is_subscribed, userId], (err, results) => {
+    if (err) {
+      console.error("Error al actualizar la suscripción del usuario:", err);
+      return res
+        .status(500)
+        .json({ message: "Error al actualizar la suscripción del usuario." });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: "Usuario no encontrado." });
+    }
+
+    res.status(200).json({ message: `Suscripción actualizada correctamente.` });
+  });
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -221,4 +275,6 @@ module.exports = {
   getCompanyIdForUser,
   getAllUsers,
   getUserById,
+  getUsersByCompanyId,
+  toggleSubscription,
 };
