@@ -2,7 +2,7 @@
 
 ## Descripción
 
-Este proyecto es el Obligatorio 1 para la materia Arquitectura de Software en la Practica. En esta entrega se implementaron todos los requerimientos funcionales y no funcionales, pedidos.
+Este proyecto es el Obligatorio 2 para la materia Arquitectura de Software en la Practica. En esta entrega se implementaron todos los requerimientos funcionales y no funcionales, tanto los requerimientos anteriores del Obligatorio 1, como los nuevos, utilizando Microservicios.
 
 ## Instrucciones para configurar un nuevo ambiente de desarrollo
 
@@ -16,11 +16,17 @@ Primero, clona el repositorio en tu máquina local:
 
 ### 2. Instalar dependencias
 
-#### Para el backend:
+#### Para cada servicio excepto audit-service:
 
-```cd backend```
+```cd <nombre>-service```
 
 ```npm install```
+
+#### Para audit-service:
+
+```cd audit-service```
+
+```pip install --no-cache-dir -r requirements.txt```
 
 #### Para el frontend:
 
@@ -30,17 +36,23 @@ Primero, clona el repositorio en tu máquina local:
 
 ```npm install```
 
-### 3. Configurar variables de entorno
+### 3. Configurar variables de entorno para cada microservicio
 
-Copia el archivo .env.tex a .env y ajusta las configuraciones según sea necesario, tanto en el backend como en el forntend.
+Copia el archivo .env.tex a .env y ajusta las configuraciones según sea necesario, tanto en los microservicios como en el forntend.
 
 ### 4. Ejecutar la aplicación
 
-#### Para iniciar el backend:
+#### Para iniciar los microservicios excepto audit-service:
 
-```cd backend```
+```cd <nombre>-service```
 
-```node index.js```
+```node app.js```
+
+#### Para iniciar los audit-service:
+
+```cd audit-service```
+
+```python app.py```
 
 #### Para iniciar el frontend:
 
@@ -56,4 +68,4 @@ Copia el archivo .env.tex a .env y ajusta las configuraciones según sea necesar
 
 ### 6. Acceder a la aplicación
 
-Abre tu navegador y ve a http://localhost:3001/login para ver la aplicación en acción.
+Abre tu navegador y ve a http://localhost:3000/login para ver la aplicación en acción.

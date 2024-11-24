@@ -10,7 +10,7 @@ export const options = {
   },
 };
 
-const BASE_URL = "http://localhost:3000/v1/features/use_sort_algorithm"; // Cambia esto por la URL de tu endpoint
+const BASE_URL = "http://localhost:3000/v1/features/use_sort_algorithm"; 
 
 export default function () {
   const body = {

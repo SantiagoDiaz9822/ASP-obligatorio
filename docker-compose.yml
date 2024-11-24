@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   user-service:
@@ -7,11 +7,11 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
-      - RDS_HOSTNAME=your-rds-endpoint
+      - RDS_HOSTNAME=user-db
       - REDIS_URL=your-elasticache-redis-url
       - JWT_SECRET=your-secret
     depends_on:
-      - db
+      - user-db
 
   company-service:
     build: ./company-service
@@ -19,7 +19,9 @@ services:
       - "3002:3002"
     environment:
       - NODE_ENV=production
-      - RDS_HOSTNAME=your-rds-endpoint
+      - RDS_HOSTNAME=company-db
+    depends_on:
+      - company-db
 
   project-service:
     build: ./project-service
@@ -27,7 +29,9 @@ services:
       - "3003:3003"
     environment:
       - NODE_ENV=production
-      - RDS_HOSTNAME=your-rds-endpoint
+      - RDS_HOSTNAME=project-db
+    depends_on:
+      - project-db
 
   feature-service:
     build: ./feature-service
@@ -35,7 +39,9 @@ services:
       - "3004:3004"
     environment:
       - NODE_ENV=production
-      - RDS_HOSTNAME=your-rds-endpoint
+      - RDS_HOSTNAME=feature-db
+    depends_on:
+      - feature-db
 
   audit-service:
     build: ./audit-service
@@ -43,7 +49,9 @@ services:
       - "3005:3005"
     environment:
       - NODE_ENV=production
-      - RDS_HOSTNAME=your-rds-endpoint
+      - RDS_HOSTNAME=audit-db
+    depends_on:
+      - audit-db
 
   report-service:
     build: ./report-service
@@ -51,15 +59,57 @@ services:
       - "3006:3006"
     environment:
       - NODE_ENV=production
-      - RDS_HOSTNAME=your-rds-endpoint
+      - RDS_HOSTNAME=report-db
+    depends_on:
+      - report-db
 
-  db:
+  user-db:
     image: mysql:5.7
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: your_database
+      MYSQL_DATABASE: userdb
     ports:
-      - "3306:3306"
+      - "3307:3306"
+
+  company-db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: companydb
+    ports:
+      - "3308:3306"
+
+  project-db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: projectdb
+    ports:
+      - "3309:3306"
+
+  feature-db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: featuredb
+    ports:
+      - "3310:3306"
+
+  audit-db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: auditdb
+    ports:
+      - "3311:3306"
+
+  report-db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: reportdb
+    ports:
+      - "3312:3306"
 
   redis:
     image: redis
