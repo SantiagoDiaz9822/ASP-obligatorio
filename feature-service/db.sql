@@ -1,0 +1,15 @@
+CREATE DATABASE featuredb;
+USE featuredb;
+
+CREATE TABLE features (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  project_id INT NOT NULL,
+  feature_key VARCHAR(255) NOT NULL UNIQUE,
+  description TEXT NOT NULL,
+  conditions JSON,
+  state ENUM('on', 'off') NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+SELECT * FROM features f

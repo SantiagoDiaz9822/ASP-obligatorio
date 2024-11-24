@@ -1,6 +1,4 @@
 const connection = require("../config/db");
-const s3 = require("../config/s3");
-const { validationResult } = require("express-validator");
 
 const axios = require("axios"); // Asegúrate de tener axios instalado
 
@@ -20,13 +18,21 @@ const createCompany = (req, res) => {
 
     // Registrar la creación de la empresa en el servicio de auditoría
     axios
-      .post(`${process.env.AUDIT_SERVICE_URL}/api/audit/log`, {
-        action: "create",
-        entity: "company",
-        entityId: results.insertId,
-        details: { name, address, logoUrl },
-        userId: userId,
-      })
+      .post(
+        `${process.env.AUDIT_SERVICE_URL}/log`,
+        {
+          headers: {
+            Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
+          },
+        },
+        {
+          action: "create",
+          entity: "company",
+          entityId: results.insertId,
+          details: { name, address, logoUrl },
+          userId: userId,
+        }
+      )
       .then(() => {
         console.log("Auditoría registrada para la creación de la empresa.");
       })
@@ -52,13 +58,21 @@ const deleteCompany = (req, res) => {
 
     // Registrar la eliminación de la empresa en el servicio de auditoría
     axios
-      .post(`${process.env.AUDIT_SERVICE_URL}/api/audit/log`, {
-        action: "delete",
-        entity: "company",
-        entityId: companyId,
-        details: { companyId },
-        userId: userId,
-      })
+      .post(
+        `${process.env.AUDIT_SERVICE_URL}/log`,
+        {
+          headers: {
+            Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
+          },
+        },
+        {
+          action: "delete",
+          entity: "company",
+          entityId: companyId,
+          details: { companyId },
+          userId: userId,
+        }
+      )
       .then(() => {
         console.log("Auditoría registrada para la eliminación de la empresa.");
       })

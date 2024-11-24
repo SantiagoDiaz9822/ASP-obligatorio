@@ -11,7 +11,7 @@ app.use(express.json()); // Parsear JSON
 app.use("/reports", reportRoutes);
 
 // Iniciar el servidor
-const PORT = process.env.PORT || 3006;
+const PORT = 3006;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
