@@ -1,20 +1,25 @@
-# Usamos una imagen base de Node.js
-FROM node:16-alpine
+# Usamos una imagen base de Python para aplicaciones web
+FROM python:3.9-slim
 
-# Establecemos el directorio de trabajo
-WORKDIR /usr/src/app
+# Definimos el directorio de trabajo dentro del contenedor
+WORKDIR /app
 
-# Copiamos los archivos del proyecto
-COPY package*.json ./
+# Copiamos los archivos de la aplicación al contenedor
+COPY . /app/
 
-# Instalamos las dependencias
-RUN npm install
+# Instalamos las dependencias de la aplicación desde requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiamos el resto de los archivos
-COPY . .
+# Exponemos el puerto que usará el servicio (por ejemplo, si la app corre en el puerto 5000)
+EXPOSE 5000
 
-# Exponemos el puerto en el que correrá el microservicio
-EXPOSE 3005
+# Establecemos las variables de entorno necesarias para la aplicación
+# (puedes agregar más dependiendo de tu configuración)
+ENV AWS_ACCESS_KEY_ID=your_aws_access_key_id
+ENV AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+ENV AWS_DEFAULT_REGION=us-east-1
+ENV SQS_QUEUE_URL=your_sqs_queue_url
+ENV USER_SERVICE_URL=your_user_service_url
 
-# Definimos el comando para iniciar el servidor
-CMD ["node", "app.js"]
+# Comando para ejecutar el servicio
+CMD ["python", "app.py"]
