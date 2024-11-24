@@ -53,16 +53,16 @@ const createFeature = (req, res) => {
             .post(
               `${process.env.AUDIT_SERVICE_URL}/log`,
               {
-                headers: {
-                  Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
-                },
-              },
-              {
                 action: "create",
                 entity: "feature",
                 entityId: results.insertId,
                 details: { feature_key, description, state, conditionsJson },
                 userId: userId,
+              },
+              {
+                headers: {
+                  Authorization: req.headers["authorization"], // El token se pasa correctamente en los headers
+                },
               }
             )
             .then(() => {
@@ -121,7 +121,7 @@ const updateFeature = (req, res) => {
           .status(500)
           .json({ message: "Error al actualizar la feature." });
       }
-      
+
       console.log(req.headers["authorization"]);
 
       // Registrar la modificación de la feature en el servicio de auditoría
@@ -129,16 +129,16 @@ const updateFeature = (req, res) => {
         .post(
           `${process.env.AUDIT_SERVICE_URL}/log`,
           {
-            headers: {
-              Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
-            },
-          },
-          {
             action: "update",
             entity: "feature",
             entityId: featureId,
             details: { description, state, conditionsJson },
             userId: userId,
+          },
+          {
+            headers: {
+              Authorization: req.headers["authorization"], // El token se pasa correctamente en los headers
+            },
           }
         )
         .then(() => {
@@ -172,16 +172,16 @@ const deleteFeature = (req, res) => {
       .post(
         `${process.env.AUDIT_SERVICE_URL}/log`,
         {
-          headers: {
-            Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
-          },
-        },
-        {
           action: "delete",
           entity: "feature",
           entityId: featureId,
           details: { featureId },
           userId: userId,
+        },
+        {
+          headers: {
+            Authorization: req.headers["authorization"], // El token se pasa correctamente en los headers
+          },
         }
       )
       .then(() => {

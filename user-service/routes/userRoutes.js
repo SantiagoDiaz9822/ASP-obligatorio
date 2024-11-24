@@ -45,12 +45,18 @@ router.post(
 );
 
 // Ruta para obtener el company_id de un usuario
-router.get("/:id/company", auth, userController.getCompanyIdForUser);
+router.get("/:id/company", userController.getCompanyIdForUser);
 
 // Ruta para obtener todos los usuarios (solo administradores)
 router.get("/", auth, authorize("admin"), userController.getAllUsers);
 
 // Ruta para obtener un usuario por ID (solo administradores)
 router.get("/:id", auth, authorize("admin"), userController.getUserById);
+
+// Ruta para obtener usuarios por company_id
+router.get("/:companyId/users", userController.getUsersByCompanyId);
+
+// Ruta para cambiar la suscripción
+router.put("/:userId/subscribe", userController.toggleSubscription);
 
 module.exports = router;

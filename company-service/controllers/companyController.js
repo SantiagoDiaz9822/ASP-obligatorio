@@ -21,16 +21,16 @@ const createCompany = (req, res) => {
       .post(
         `${process.env.AUDIT_SERVICE_URL}/log`,
         {
-          headers: {
-            Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
-          },
-        },
-        {
           action: "create",
           entity: "company",
           entityId: results.insertId,
           details: { name, address, logoUrl },
           userId: userId,
+        },
+        {
+          headers: {
+            Authorization: req.headers["authorization"], // El token se pasa correctamente en los headers
+          },
         }
       )
       .then(() => {
@@ -61,16 +61,16 @@ const deleteCompany = (req, res) => {
       .post(
         `${process.env.AUDIT_SERVICE_URL}/log`,
         {
-          headers: {
-            Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
-          },
-        },
-        {
           action: "delete",
           entity: "company",
           entityId: companyId,
           details: { companyId },
           userId: userId,
+        },
+        {
+          headers: {
+            Authorization: req.headers["authorization"], // El token se pasa correctamente en los headers
+          },
         }
       )
       .then(() => {
