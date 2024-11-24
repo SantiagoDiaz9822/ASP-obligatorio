@@ -50,13 +50,21 @@ const createFeature = (req, res) => {
 
           // Registrar la creación de la feature en el servicio de auditoría
           axios
-            .post(`${process.env.AUDIT_SERVICE_URL}/api/audit/log`, {
-              action: "create",
-              entity: "feature",
-              entityId: results.insertId,
-              details: { feature_key, description, state, conditionsJson },
-              userId: userId,
-            })
+            .post(
+              `${process.env.AUDIT_SERVICE_URL}/log`,
+              {
+                headers: {
+                  Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
+                },
+              },
+              {
+                action: "create",
+                entity: "feature",
+                entityId: results.insertId,
+                details: { feature_key, description, state, conditionsJson },
+                userId: userId,
+              }
+            )
             .then(() => {
               console.log(
                 "Auditoría registrada para la creación de la feature."
@@ -113,16 +121,26 @@ const updateFeature = (req, res) => {
           .status(500)
           .json({ message: "Error al actualizar la feature." });
       }
+      
+      console.log(req.headers["authorization"]);
 
       // Registrar la modificación de la feature en el servicio de auditoría
       axios
-        .post(`${process.env.AUDIT_SERVICE_URL}/api/audit/log`, {
-          action: "update",
-          entity: "feature",
-          entityId: featureId,
-          details: { description, state, conditionsJson },
-          userId: userId,
-        })
+        .post(
+          `${process.env.AUDIT_SERVICE_URL}/log`,
+          {
+            headers: {
+              Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
+            },
+          },
+          {
+            action: "update",
+            entity: "feature",
+            entityId: featureId,
+            details: { description, state, conditionsJson },
+            userId: userId,
+          }
+        )
         .then(() => {
           console.log(
             "Auditoría registrada para la modificación de la feature."
@@ -151,13 +169,21 @@ const deleteFeature = (req, res) => {
 
     // Registrar la eliminación de la feature en el servicio de auditoría
     axios
-      .post(`${process.env.AUDIT_SERVICE_URL}/api/audit/log`, {
-        action: "delete",
-        entity: "feature",
-        entityId: featureId,
-        details: { featureId },
-        userId: userId,
-      })
+      .post(
+        `${process.env.AUDIT_SERVICE_URL}/log`,
+        {
+          headers: {
+            Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
+          },
+        },
+        {
+          action: "delete",
+          entity: "feature",
+          entityId: featureId,
+          details: { featureId },
+          userId: userId,
+        }
+      )
       .then(() => {
         console.log("Auditoría registrada para la eliminación de la feature.");
       })

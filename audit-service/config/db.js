@@ -1,7 +1,21 @@
-const AWS = require("aws-sdk");
+require("dotenv").config();
+const mysql = require("mysql2");
 
-const dynamoDB = new AWS.DynamoDB.DocumentClient({
-  region: process.env.AWS_REGION,
+// Crear una conexión a la base de datos MySQL
+const connection = mysql.createConnection({
+  host: process.env.RDS_HOSTNAME,
+  user: process.env.RDS_USERNAME,
+  password: process.env.RDS_PASSWORD,
+  database: process.env.RDS_DATABASE,
+  port: 3306, // Usar el puerto configurado o 3306 por defecto
 });
 
-module.exports = dynamoDB;
+connection.connect((err) => {
+  if (err) {
+    console.error("Error conectando a la base de datos:", err.stack);
+    return;
+  }
+  console.log("Conectado a la base de datos MySQL");
+});
+
+module.exports = connection;

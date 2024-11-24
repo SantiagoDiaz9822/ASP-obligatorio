@@ -37,13 +37,21 @@ const createProject = async (req, res) => {
 
         // Registrar la creación del proyecto en el servicio de auditoría
         axios
-          .post(`${process.env.AUDIT_SERVICE_URL}/log`, {
-            action: "create",
-            entity: "project",
-            entityId: results.insertId,
-            details: { name, description, companyId },
-            userId: userId,
-          })
+          .post(
+            `${process.env.AUDIT_SERVICE_URL}/log`,
+            {
+              headers: {
+                Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
+              },
+            },
+            {
+              action: "create",
+              entity: "project",
+              entityId: results.insertId,
+              details: { name, description, companyId },
+              userId: userId,
+            }
+          )
           .then(() => {
             console.log("Auditoría registrada para la creación del proyecto.");
           })
@@ -82,13 +90,21 @@ const deleteProject = (req, res) => {
 
     // Registrar la eliminación del proyecto en el servicio de auditoría
     axios
-      .post(`${process.env.AUDIT_SERVICE_URL}/api/audit/log`, {
-        action: "delete",
-        entity: "project",
-        entityId: projectId,
-        details: { projectId },
-        userId: userId,
-      })
+      .post(
+        `${process.env.AUDIT_SERVICE_URL}/log`,
+        {
+          headers: {
+            Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
+          },
+        },
+        {
+          action: "delete",
+          entity: "project",
+          entityId: projectId,
+          details: { projectId },
+          userId: userId,
+        }
+      )
       .then(() => {
         console.log("Auditoría registrada para la eliminación del proyecto.");
       })
@@ -180,5 +196,5 @@ module.exports = {
   getAllProjects,
   getProjectById,
   deleteProject,
-  validateApiKey
+  validateApiKey,
 };

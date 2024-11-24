@@ -27,13 +27,21 @@ const registerUser = async (req, res) => {
 
       // Registrar la creación del usuario en el servicio de auditoría
       axios
-        .post(`${process.env.AUDIT_SERVICE_URL}/api/audit/log`, {
-          action: "create",
-          entity: "user",
-          entityId: results.insertId,
-          details: { email, role },
-          userId: userId, // Agregar el ID del usuario que realizó la acción
-        })
+        .post(
+          `${process.env.AUDIT_SERVICE_URL}/log`,
+          {
+            headers: {
+              Authorization: `${req.headers["authorization"]}`, // Usamos el token desde la cabecera Authorization
+            },
+          },
+          {
+            action: "create",
+            entity: "user",
+            entityId: results.insertId,
+            details: { email, role },
+            userId: userId, // Agregar el ID del usuario que realizó la acción
+          }
+        )
         .then(() => {
           console.log("Auditoría registrada para la creación del usuario.");
         })

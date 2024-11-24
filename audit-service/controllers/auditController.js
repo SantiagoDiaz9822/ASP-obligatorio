@@ -1,83 +1,65 @@
-const dynamoDb = require("../config/db");
-const { validationResult } = require("express-validator");
-const uuid = require("uuid");
+const db = require("../config/db"); // Tu configuración de base de datos
 
-// Registrar una nueva acción en el historial de auditoría
-const createAuditRecord = async (req, res) => {
-  const { action, entity, entityId, details, userId } = req.body;
+// Función para registrar una acción de auditoría con promesas (usando async/await)
+async function logAuditAction(action, entity, entityId, details, userId) {
+  const timestamp = new Date().toISOString(); // Fecha y hora actual
 
-  // Validación de los datos
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  const auditId = uuid.v4(); // Generamos un ID único para el registro
-
-  const params = {
-    TableName: process.env.DYNAMODB_TABLE_NAME,
-    Item: {
-      id: auditId, // Usamos el UUID como el ID del registro
-      action: action,
-      entity: entity, // Entidad (project, user, etc.)
-      entityId: entityId, // El ID de la entidad afectada
-      details: JSON.stringify(details), // Detalles como JSON string
-      userId: userId, // ID del usuario que realizó la acción
-      timestamp: new Date().toISOString(),
-    },
+  const auditRecord = {
+    action,
+    entity,
+    entity_id: entityId,
+    details: JSON.stringify(details),
+    user_id: userId,
+    timestamp,
   };
 
+  const query =
+    "INSERT INTO audit_log (action, entity, entity_id, details, user_id, timestamp) VALUES (?, ?, ?, ?, ?, ?)";
+  const values = [
+    auditRecord.action,
+    auditRecord.entity,
+    auditRecord.entity_id,
+    auditRecord.details,
+    auditRecord.user_id,
+    auditRecord.timestamp,
+  ];
+
   try {
-    // Guardar en DynamoDB
-    await dynamoDb.put(params).promise();
-    res.status(201).json({
-      message: "Acción registrada exitosamente en el historial de auditoría.",
-      auditId: auditId,
-    });
+    const [result] = await db.promise().execute(query, values); // Usamos .promise() para promesas
+    console.log("Acción de auditoría registrada con éxito", result);
   } catch (err) {
-    console.error("Error al registrar la acción de auditoría:", err);
-    return res.status(500).json({ message: "Error al registrar la acción." });
+    console.error("Error al registrar la auditoría:", err);
   }
-};
+}
 
-// Leer todos los registros de auditoría
-const getAllAuditLogs = async (req, res) => {
-  const params = {
-    TableName: process.env.DYNAMODB_TABLE_NAME,
-  };
+// Función para obtener los registros de auditoría con filtros usando async/await
+async function getAuditLogs(filters) {
+  let queryBase = "SELECT * FROM audit_log WHERE 1 = 1"; // Iniciar consulta con filtro de todas las entradas
+  const queryValues = [];
+
+  // Agregar filtros
+  if (filters.startDate && filters.endDate) {
+    queryBase += " AND timestamp BETWEEN ? AND ?";
+    queryValues.push(filters.startDate, filters.endDate);
+  }
+
+  if (filters.action) {
+    queryBase += " AND action = ?";
+    queryValues.push(filters.action);
+  }
+
+  if (filters.userId) {
+    queryBase += " AND user_id = ?";
+    queryValues.push(filters.userId);
+  }
 
   try {
-    const data = await dynamoDb.scan(params).promise();
-    res.json(data.Items);
+    const [rows] = await db.promise().execute(queryBase, queryValues);
+    return rows; // Retorna los registros obtenidos
   } catch (err) {
     console.error("Error al obtener los registros de auditoría:", err);
-    return res.status(500).json({ message: "Error al obtener los registros." });
+    throw new Error("Error al obtener los registros de auditoría");
   }
-};
+}
 
-// Leer un registro de auditoría por ID
-const getAuditLogById = async (req, res) => {
-  const auditId = req.params.id;
-
-  const params = {
-    TableName: process.env.DYNAMODB_TABLE_NAME,
-    Key: {
-      id: auditId, // Buscamos por ID
-    },
-  };
-
-  try {
-    const data = await dynamoDb.get(params).promise();
-    if (!data.Item) {
-      return res
-        .status(404)
-        .json({ message: "Registro de auditoría no encontrado." });
-    }
-    res.json(data.Item);
-  } catch (err) {
-    console.error("Error al obtener el registro de auditoría:", err);
-    return res.status(500).json({ message: "Error al obtener el registro." });
-  }
-};
-
-module.exports = { createAuditRecord, getAllAuditLogs, getAuditLogById };
+module.exports = { logAuditAction, getAuditLogs };

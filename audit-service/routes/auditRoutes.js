@@ -1,33 +1,60 @@
 const express = require("express");
-const router = express.Router();
-const { body } = require("express-validator");
-const auth = require("../middleware/auth");
 const {
-  createAuditRecord,
-  getAllAuditLogs,
-  getAuditLogById,
+  logAuditAction,
+  getAuditLogs,
 } = require("../controllers/auditController");
+const router = express.Router();
+const auth = require("../middleware/auth");
+const authorize = require("../middleware/authorize");
 
-// Registrar una nueva acción de auditoría
-router.post(
-  "/log",
-  auth,
-  [
-    body("action").notEmpty().withMessage("La acción es requerida."),
-    body("entity").notEmpty().withMessage("La entidad es requerida."),
-    body("entityId")
-      .notEmpty()
-      .withMessage("El ID de la entidad es requerido."),
-    body("details").isObject().withMessage("Los detalles deben ser un objeto."),
-    body("userId").notEmpty().withMessage("El ID del usuario es requerido."),
-  ],
-  createAuditRecord
-);
+// Ruta para registrar una acción de auditoría
+router.post("/log", async (req, res) => {
+  const { action, entity, entityId, details, userId } = req.body;
 
-// Leer todos los registros de auditoría
-router.get("/", auth, getAllAuditLogs);
+  if (!action || !entity || !entityId || !details || !userId) {
+    return res.status(400).json({ error: "Faltan parámetros requeridos" });
+  }
 
-// Leer un registro de auditoría por ID
-router.get("/:id", auth, getAuditLogById);
+  try {
+    await logAuditAction(action, entity, entityId, details, userId);
+    return res
+      .status(200)
+      .json({ message: "Acción de auditoría registrada con éxito" });
+  } catch (err) {
+    console.error("Error al registrar la acción de auditoría:", err);
+    return res
+      .status(500)
+      .json({ error: "Error al registrar la acción de auditoría" });
+  }
+});
+
+// Ruta para obtener registros de auditoría filtrados
+router.get("/logs", auth, authorize("admin"), async (req, res) => {
+  const filters = {};
+
+  // Recoger filtros opcionales de la query string
+  if (req.query.startDate && req.query.endDate) {
+    filters.startDate = req.query.startDate;
+    filters.endDate = req.query.endDate;
+  }
+
+  if (req.query.action) {
+    filters.action = req.query.action;
+  }
+
+  if (req.query.userId) {
+    filters.userId = req.query.userId;
+  }
+
+  try {
+    const logs = await getAuditLogs(filters);
+    return res.status(200).json({ logs });
+  } catch (err) {
+    console.error("Error al obtener los logs de auditoría:", err);
+    return res
+      .status(500)
+      .json({ error: "Error al obtener los registros de auditoría" });
+  }
+});
 
 module.exports = router;
