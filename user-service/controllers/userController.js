@@ -117,7 +117,7 @@ const assignUserToCompany = (req, res) => {
 
   // Verificar si la empresa existe llamando al microservicio de empresas
   axios
-    .get(`${process.env.COMPANY_SERVICE_URL}/companies/${company_id}`)
+    .get(`${process.env.COMPANY_SERVICE_URL}/${company_id}`)
     .then((response) => {
       // Si la empresa existe, proseguimos con la asignación del usuario
       const checkUserQuery = "SELECT * FROM users WHERE id = ?";
